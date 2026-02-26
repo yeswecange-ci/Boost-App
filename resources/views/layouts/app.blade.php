@@ -70,6 +70,11 @@
             <span class="icon"><i class="fas fa-gear"></i></span>
             Paramètres
         </a>
+        <a href="{{ route('users.index') }}"
+           class="sidebar-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
+            <span class="icon"><i class="fas fa-users"></i></span>
+            Utilisateurs
+        </a>
         @endif
 
         @if(auth()->user()->hasRole(['validator_n1', 'validator', 'validator_n2', 'admin']))

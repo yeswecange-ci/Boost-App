@@ -4,6 +4,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\BoostController;
 use App\Http\Controllers\ValidatorController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
 
@@ -33,6 +34,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/boost/create',          [BoostController::class, 'create'])->name('boost.create');
     Route::post('/boost',                [BoostController::class, 'store'])->name('boost.store');
     Route::post('/boost/{boost}/submit', [BoostController::class, 'submit'])->name('boost.submit');
+
+    // ─── Users (admin only) ──────────────────────────────────
+    Route::middleware(['role:admin'])->prefix('users')->name('users.')->group(function () {
+        Route::get('/',                [UserController::class, 'index'])->name('index');
+        Route::get('/create',          [UserController::class, 'create'])->name('create');
+        Route::post('/',               [UserController::class, 'store'])->name('store');
+        Route::get('/{user}/edit',     [UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}',          [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}',       [UserController::class, 'destroy'])->name('destroy');
+        Route::post('/{user}/toggle',  [UserController::class, 'toggleActive'])->name('toggle');
+    });
 
     // ─── Settings (admin only) ───────────────────────────────
     Route::middleware(['role:admin'])->prefix('settings')->name('settings.')->group(function () {

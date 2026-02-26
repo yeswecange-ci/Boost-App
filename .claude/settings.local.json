@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run:*)",
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(ls:*)",
+      "Bash(php:*)"
     ]
   }
 }
