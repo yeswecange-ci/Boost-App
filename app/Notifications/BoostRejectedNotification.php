@@ -22,7 +22,7 @@ class BoostRejectedNotification extends Notification
             ->greeting("Bonjour " . $notifiable->name . ",")
             ->line("Votre demande de boost #" . $this->boost->id . " a été rejetée.")
             ->line("Raison : " . $this->boost->rejection_reason)
-            ->action("Modifier et resoumettre", url('/boost/' . $this->boost->id));
+            ->action("Modifier et resoumettre", route('boost.show', $this->boost->id));
     }
 
     public function toArray($notifiable): array

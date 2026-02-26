@@ -6,6 +6,7 @@ use App\Models\BoostRequest;
 use App\Models\User;
 use App\Notifications\BoostCreatedNotification;
 use App\Notifications\BoostActivatedNotification;
+use App\Services\SettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -134,7 +135,8 @@ class WebhookController extends Controller
      */
     private function validateSecret(Request $request): bool
     {
-        $expected = config('services.n8n.secret');
+        // Priorité : valeur en DB (settings UI) → fallback config/.env
+        $expected = SettingService::get('n8n.secret') ?: config('services.n8n.secret');
         $received = $request->header('X-N8N-Secret');
 
         if (!$expected || !$received) {

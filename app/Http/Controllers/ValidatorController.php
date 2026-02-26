@@ -243,7 +243,7 @@ class ValidatorController extends Controller
      */
     public function activate(Request $request, BoostRequest $boost)
     {
-        abort_if($boost->status !== 'paused_ready', 422, 'Seules les campagnes prêtes peuvent être activées.');
+        abort_if(!in_array($boost->status, ['paused_ready', 'paused']), 422, 'Seules les campagnes prêtes ou en pause peuvent être activées.');
 
         try {
             $this->n8n->triggerActivate($boost);

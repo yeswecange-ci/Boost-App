@@ -175,9 +175,15 @@
         </table>
     </div>
     <div class="card-footer" style="display:flex; justify-content:flex-end;">
+        @if(auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']))
+        <a href="{{ route('boost.all') }}" style="font-size:0.875rem; color:var(--color-primary); text-decoration:none; font-weight:500;">
+            Voir tous les boosts <i class="fas fa-arrow-right" style="font-size:0.75rem;"></i>
+        </a>
+        @else
         <a href="{{ route('boost.my-requests') }}" style="font-size:0.875rem; color:var(--color-primary); text-decoration:none; font-weight:500;">
             Voir tous mes boosts <i class="fas fa-arrow-right" style="font-size:0.75rem;"></i>
         </a>
+        @endif
     </div>
     @endif
 </div>

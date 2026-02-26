@@ -22,7 +22,7 @@ class BoostApprovedNotification extends Notification
             ->greeting("Bonjour " . $notifiable->name . ",")
             ->line("Votre demande de boost #" . $this->boost->id . " a été approuvée.")
             ->line("La campagne est en cours de création sur Meta Ads.")
-            ->action("Voir le boost", url('/boost/' . $this->boost->id));
+            ->action("Voir le boost", route('boost.show', $this->boost->id));
     }
 
     public function toArray($notifiable): array

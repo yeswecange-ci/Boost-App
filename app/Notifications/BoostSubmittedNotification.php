@@ -24,7 +24,7 @@ class BoostSubmittedNotification extends Notification
             ->line("Page : " . $this->boost->page_name)
             ->line("Budget : " . number_format($this->boost->budget, 0, ',', ' ') . " " . $this->boost->currency)
             ->line("Période : " . $this->boost->start_date->format('d/m/Y') . " → " . $this->boost->end_date->format('d/m/Y'))
-            ->action("Voir la demande", url('/boost/pending'))
+            ->action("Voir la demande", route('boost.pending-n1'))
             ->line("Merci de valider ou rejeter cette demande.");
     }
 
