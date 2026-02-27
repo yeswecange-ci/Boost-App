@@ -122,26 +122,40 @@
     </nav>
 
     {{-- User info --}}
+    @php
+        $__u = auth()->user();
+        $__avatarPresets = ['indigo'=>'linear-gradient(135deg,#4f46e5,#7c3aed)','violet'=>'linear-gradient(135deg,#7c3aed,#a855f7)','rose'=>'linear-gradient(135deg,#e11d48,#f43f5e)','amber'=>'linear-gradient(135deg,#d97706,#f59e0b)','emerald'=>'linear-gradient(135deg,#059669,#10b981)','sky'=>'linear-gradient(135deg,#0284c7,#38bdf8)','slate'=>'linear-gradient(135deg,#475569,#64748b)'];
+        $__avatarGradient = 'linear-gradient(135deg,#4f46e5,#7c3aed)';
+        $__avatarImg = null;
+        if ($__u->avatar) {
+            if (str_starts_with($__u->avatar, 'avatars/')) { $__avatarImg = Storage::url($__u->avatar); }
+            elseif (str_starts_with($__u->avatar, 'preset:')) { $__avatarGradient = $__avatarPresets[str_replace('preset:','',$__u->avatar)] ?? $__avatarGradient; }
+        }
+    @endphp
     <div style="padding: 1rem 0.75rem; border-top: 1px solid var(--color-border);">
-        <div style="display:flex; align-items:center; gap:0.75rem; padding: 0.625rem 0.5rem;">
+        <a href="{{ route('profile.show') }}" style="display:flex; align-items:center; gap:0.75rem; padding:0.625rem 0.5rem; border-radius:0.5rem; text-decoration:none; transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
             <div style="
-                width: 36px; height: 36px;
-                background: linear-gradient(135deg, #4f46e5, #7c3aed);
-                border-radius: 50%;
-                display: flex; align-items: center; justify-content: center;
-                color: white; font-size: 0.875rem; font-weight: 700; flex-shrink: 0;
+                width:36px; height:36px; border-radius:50%; overflow:hidden; flex-shrink:0;
+                background: {{ $__avatarImg ? 'none' : $__avatarGradient }};
+                display:flex; align-items:center; justify-content:center;
+                color:white; font-size:0.875rem; font-weight:700;
             ">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                @if($__avatarImg)
+                    <img src="{{ $__avatarImg }}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
+                @else
+                    {{ strtoupper(substr($__u->name, 0, 1)) }}
+                @endif
             </div>
             <div style="flex:1; min-width:0;">
                 <div style="font-size:0.875rem; font-weight:600; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                    {{ auth()->user()->name }}
+                    {{ $__u->name }}
                 </div>
                 <div style="font-size:0.75rem; color:#64748b;">
-                    {{ auth()->user()->roles->first()?->name ?? 'Utilisateur' }}
+                    {{ $__u->roles->first()?->name ?? 'Utilisateur' }}
                 </div>
             </div>
-        </div>
+            <i class="fas fa-pen-to-square" style="font-size:0.75rem; color:#94a3b8; flex-shrink:0;"></i>
+        </a>
         <form method="POST" action="{{ route('logout') }}" style="margin-top:0.25rem;">
             @csrf
             <button type="submit" class="sidebar-item" style="width:100%; border:none; background:transparent; cursor:pointer; color:#ef4444;">
@@ -241,16 +255,19 @@
                     style="display:flex; align-items:center; gap:0.5rem; background:none; border:none; cursor:pointer; padding:0.375rem 0.5rem; border-radius:0.5rem; transition:background 0.15s;"
                     onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
                 <div style="
-                    width: 32px; height: 32px;
-                    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-                    border-radius: 50%;
-                    display: flex; align-items: center; justify-content: center;
-                    color: white; font-size: 0.8125rem; font-weight: 700;
+                    width:32px; height:32px; border-radius:50%; overflow:hidden;
+                    background: {{ $__avatarImg ? 'none' : $__avatarGradient }};
+                    display:flex; align-items:center; justify-content:center;
+                    color:white; font-size:0.8125rem; font-weight:700; flex-shrink:0;
                 ">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                    @if($__avatarImg)
+                        <img src="{{ $__avatarImg }}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
+                    @else
+                        {{ strtoupper(substr($__u->name, 0, 1)) }}
+                    @endif
                 </div>
                 <span style="font-size:0.875rem; font-weight:500; color:#374151; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" class="hidden sm:inline">
-                    {{ auth()->user()->name }}
+                    {{ $__u->name }}
                 </span>
                 <i class="fas fa-chevron-down" style="font-size:0.6875rem; color:#94a3b8;"></i>
             </button>
@@ -258,17 +275,25 @@
             <div x-show="open" x-cloak
                  style="position:absolute; right:0; top:calc(100% + 8px); z-index:50;"
                  class="dropdown-menu">
-                <div style="padding: 0.625rem 0.875rem; border-bottom: 1px solid var(--color-border);">
-                    <div style="font-weight:600; font-size:0.875rem; color:#0f172a;">{{ auth()->user()->name }}</div>
-                    <div style="font-size:0.75rem; color:#64748b;">{{ auth()->user()->email }}</div>
+                <div style="padding:0.625rem 0.875rem; border-bottom:1px solid var(--color-border);">
+                    <div style="font-weight:600; font-size:0.875rem; color:#0f172a;">{{ $__u->name }}</div>
+                    <div style="font-size:0.75rem; color:#64748b;">{{ $__u->email }}</div>
                 </div>
-                <form method="POST" action="{{ route('logout') }}" style="padding:0.375rem;">
-                    @csrf
-                    <button type="submit" class="dropdown-item" style="color:#ef4444; width:100%;">
-                        <i class="fas fa-arrow-right-from-bracket"></i>
-                        Déconnexion
-                    </button>
-                </form>
+                <div style="padding:0.375rem;">
+                    <a href="{{ route('profile.show') }}" class="dropdown-item">
+                        <i class="fas fa-user-pen"></i>
+                        Mon profil
+                    </a>
+                </div>
+                <div style="padding:0 0.375rem 0.375rem; border-top:1px solid var(--color-border);">
+                    <form method="POST" action="{{ route('logout') }}" style="margin-top:0.375rem;">
+                        @csrf
+                        <button type="submit" class="dropdown-item" style="color:#ef4444; width:100%;">
+                            <i class="fas fa-arrow-right-from-bracket"></i>
+                            Déconnexion
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 

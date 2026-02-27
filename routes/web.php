@@ -7,6 +7,7 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/', fn() => redirect()->route('login'));
 
@@ -25,6 +26,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/read-all',   [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+    // ─── Profil utilisateur ──────────────────────────────────
+    Route::get('/profile',                [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile/info',           [ProfileController::class, 'updateInfo'])->name('profile.update-info');
+    Route::put('/profile/password',       [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+    Route::post('/profile/avatar',        [ProfileController::class, 'updateAvatar'])->name('profile.update-avatar');
 
     // Posts
     Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
