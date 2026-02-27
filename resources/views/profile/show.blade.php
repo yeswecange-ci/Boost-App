@@ -213,7 +213,7 @@
                     <div>
                         <label class="form-label" for="current_password">Mot de passe actuel</label>
                         <div style="position:relative;">
-                            <input :type="showCurrent ? 'text' : 'password'"
+                            <input type="password" :type="showCurrent ? 'text' : 'password'"
                                    id="current_password" name="current_password"
                                    class="form-control @error('current_password') is-invalid @enderror"
                                    placeholder="••••••••"
@@ -221,7 +221,7 @@
                             <button type="button" @click="showCurrent = !showCurrent"
                                     style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%);
                                            background:none; border:none; cursor:pointer; color:var(--color-muted); padding:0;">
-                                <i :class="showCurrent ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                <i class="fas fa-eye" :class="showCurrent ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
                             </button>
                         </div>
                         @error('current_password')
@@ -233,7 +233,7 @@
                     <div>
                         <label class="form-label" for="password">Nouveau mot de passe</label>
                         <div style="position:relative;">
-                            <input :type="showNew ? 'text' : 'password'"
+                            <input type="password" :type="showNew ? 'text' : 'password'"
                                    id="password" name="password"
                                    class="form-control @error('password') is-invalid @enderror"
                                    placeholder="8 caractères minimum"
@@ -241,7 +241,7 @@
                             <button type="button" @click="showNew = !showNew"
                                     style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%);
                                            background:none; border:none; cursor:pointer; color:var(--color-muted); padding:0;">
-                                <i :class="showNew ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                <i class="fas fa-eye" :class="showNew ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
                             </button>
                         </div>
                         @error('password')
@@ -253,7 +253,7 @@
                     <div>
                         <label class="form-label" for="password_confirmation">Confirmer le nouveau mot de passe</label>
                         <div style="position:relative;">
-                            <input :type="showConfirm ? 'text' : 'password'"
+                            <input type="password" :type="showConfirm ? 'text' : 'password'"
                                    id="password_confirmation" name="password_confirmation"
                                    class="form-control"
                                    placeholder="••••••••"
@@ -261,7 +261,7 @@
                             <button type="button" @click="showConfirm = !showConfirm"
                                     style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%);
                                            background:none; border:none; cursor:pointer; color:var(--color-muted); padding:0;">
-                                <i :class="showConfirm ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                <i class="fas fa-eye" :class="showConfirm ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
                             </button>
                         </div>
                     </div>
