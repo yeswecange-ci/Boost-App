@@ -4,7 +4,11 @@
       "Bash(npm run:*)",
       "Bash(php artisan:*)",
       "Bash(ls:*)",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(composer update:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
