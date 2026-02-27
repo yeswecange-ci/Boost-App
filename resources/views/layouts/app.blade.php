@@ -7,12 +7,6 @@
 
     <title>{{ $pageTitle ?? config('app.name', 'Boost Manager') }}</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body x-data="{ sidebarOpen: false }">
@@ -172,12 +166,16 @@
         </div>
 
         {{-- Notifications --}}
+        @php
+            $__notifCount  = $__u->unreadNotifications()->count();
+            $__notifItems  = $__notifCount > 0 ? $__u->unreadNotifications()->latest()->limit(10)->get() : collect();
+        @endphp
         <div x-data="{ open: false }" style="position:relative;">
             <button @click="open = !open" @click.away="open = false"
                     style="position:relative; background:none; border:none; cursor:pointer; width:2.5rem; height:2.5rem; border-radius:0.5rem; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:1.125rem; transition:background 0.15s;"
                     onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
                 <i class="fas fa-bell"></i>
-                @if(auth()->user()->unreadNotifications->count() > 0)
+                @if($__notifCount > 0)
                 <span style="position:absolute; top:4px; right:4px; width:8px; height:8px; background:#ef4444; border-radius:50%; border:2px solid white;"></span>
                 @endif
             </button>
@@ -187,14 +185,14 @@
                  class="dropdown-menu">
                 <div style="padding: 0.625rem 0.875rem; border-bottom: 1px solid var(--color-border); font-weight: 600; font-size: 0.875rem; color: #0f172a;">
                     Notifications
-                    @if(auth()->user()->unreadNotifications->count() > 0)
+                    @if($__notifCount > 0)
                     <span style="float:right; font-size:0.75rem; color:#64748b; font-weight:normal;">
-                        {{ auth()->user()->unreadNotifications->count() }} non lue(s)
+                        {{ $__notifCount }} non lue(s)
                     </span>
                     @endif
                 </div>
 
-                @forelse(auth()->user()->unreadNotifications->take(10) as $notif)
+                @forelse($__notifItems as $notif)
                 <a class="notif-item"
                    href="{{ route('boost.show', $notif->data['boost_id']) }}"
                    onclick="event.preventDefault(); document.getElementById('mark-read-{{ $notif->id }}').submit();">
@@ -216,7 +214,7 @@
                 </div>
                 @endforelse
 
-                @if(auth()->user()->unreadNotifications->count() > 0)
+                @if($__notifCount > 0)
                 <div style="padding: 0.5rem 0.875rem; border-top: 1px solid var(--color-border);">
                     <form method="POST" action="{{ route('notifications.read-all') }}">
                         @csrf
