@@ -9,12 +9,12 @@ if (token) {
 }
 
 // ─── Page loader ─────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+// window.load attend que TOUT soit prêt : CDN fonts, FA, Alpine, images
+window.addEventListener('load', () => {
     const loader = document.getElementById('page-loader');
-    if (loader) {
-        loader.classList.add('loader-fade-out');
-        setTimeout(() => loader.remove(), 350);
-    }
+    if (!loader) return;
+    loader.classList.add('loader-fade-out');
+    setTimeout(() => loader.remove(), 350);
 });
 
 // Show loader on internal link navigation
@@ -27,7 +27,7 @@ document.addEventListener('click', e => {
         link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey
     ) return;
     showPageLoader();
-});
+}, true);
 
 function showPageLoader() {
     if (document.getElementById('page-loader')) return;
@@ -44,7 +44,6 @@ document.addEventListener('submit', e => {
     btn.disabled = true;
     btn.dataset.originalHtml = btn.innerHTML;
     btn.classList.add('btn-loading');
-    // Re-enable after 15s as safety fallback
     setTimeout(() => resetBtn(btn), 15000);
 });
 
