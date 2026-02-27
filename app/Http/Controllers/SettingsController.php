@@ -24,21 +24,23 @@ class SettingsController extends Controller
      */
     public function updateN8n(Request $request)
     {
+        // PHP converts dots in field names to underscores in $_POST,
+        // so name="n8n.webhook_create" arrives as n8n_webhook_create.
         $request->validate([
-            'n8n.webhook_create'   => 'nullable|url',
-            'n8n.webhook_activate' => 'nullable|url',
-            'n8n.webhook_pause'    => 'nullable|url',
-            'n8n.secret'           => 'nullable|string|max:255',
-            'n8n.timeout'          => 'nullable|integer|min:3|max:60',
+            'n8n_webhook_create'   => 'nullable|url',
+            'n8n_webhook_activate' => 'nullable|url',
+            'n8n_webhook_pause'    => 'nullable|url',
+            'n8n_secret'           => 'nullable|string|max:255',
+            'n8n_timeout'          => 'nullable|integer|min:3|max:60',
         ]);
 
         SettingService::setMany([
-            'n8n.mock_mode'        => $request->boolean('n8n.mock_mode') ? 'true' : 'false',
-            'n8n.webhook_create'   => $request->input('n8n.webhook_create'),
-            'n8n.webhook_activate' => $request->input('n8n.webhook_activate'),
-            'n8n.webhook_pause'    => $request->input('n8n.webhook_pause'),
-            'n8n.secret'           => $request->input('n8n.secret'),
-            'n8n.timeout'          => $request->input('n8n.timeout', 10),
+            'n8n.mock_mode'        => $request->boolean('n8n_mock_mode') ? 'true' : 'false',
+            'n8n.webhook_create'   => $request->input('n8n_webhook_create'),
+            'n8n.webhook_activate' => $request->input('n8n_webhook_activate'),
+            'n8n.webhook_pause'    => $request->input('n8n_webhook_pause'),
+            'n8n.secret'           => $request->input('n8n_secret'),
+            'n8n.timeout'          => $request->input('n8n_timeout', 10),
         ]);
 
         return redirect()->route('settings.index')
@@ -50,19 +52,21 @@ class SettingsController extends Controller
      */
     public function updateMeta(Request $request)
     {
+        // PHP converts dots in field names to underscores in $_POST,
+        // so name="meta.app_id" arrives as meta_app_id.
         $request->validate([
-            'meta.app_id'       => 'nullable|string|max:50',
-            'meta.app_secret'   => 'nullable|string|max:255',
-            'meta.access_token' => 'nullable|string|max:1000',
-            'meta.api_version'  => 'nullable|string|regex:/^v\d+\.\d+$/',
+            'meta_app_id'       => 'nullable|string|max:50',
+            'meta_app_secret'   => 'nullable|string|max:255',
+            'meta_access_token' => 'nullable|string|max:1000',
+            'meta_api_version'  => 'nullable|string|regex:/^v\d+\.\d+$/',
         ]);
 
         SettingService::setMany([
-            'meta.mock_mode'     => $request->boolean('meta.mock_mode') ? 'true' : 'false',
-            'meta.app_id'        => $request->input('meta.app_id'),
-            'meta.app_secret'    => $request->input('meta.app_secret'),
-            'meta.access_token'  => $request->input('meta.access_token'),
-            'meta.api_version'   => $request->input('meta.api_version', 'v21.0'),
+            'meta.mock_mode'     => $request->boolean('meta_mock_mode') ? 'true' : 'false',
+            'meta.app_id'        => $request->input('meta_app_id'),
+            'meta.app_secret'    => $request->input('meta_app_secret'),
+            'meta.access_token'  => $request->input('meta_access_token'),
+            'meta.api_version'   => $request->input('meta_api_version', 'v21.0'),
         ]);
 
         return redirect()->route('settings.index')
