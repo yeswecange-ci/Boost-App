@@ -77,10 +77,10 @@
                                         cursor:pointer; display:flex; align-items:center; justify-content:center;
                                         font-size:1rem; font-weight:700; color:#fff;
                                         transition: transform .15s, border-color .15s;
-                                        {{ ($avatarPreset === $name) ? 'border-color: var(--color-primary); transform:scale(1.15);' : '' }}
+                                        {{ ($avatarPresetKey === $name) ? 'border-color: var(--color-primary); transform:scale(1.15);' : '' }}
                                     "
                                     onmouseover="this.style.transform='scale(1.12)'"
-                                    onmouseout="this.style.transform='{{ ($avatarPreset === $name) ? 'scale(1.15)' : 'scale(1)' }}'">
+                                    onmouseout="this.style.transform='{{ ($avatarPresetKey === $name) ? 'scale(1.15)' : 'scale(1)' }}'">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </button>
                             @endforeach
