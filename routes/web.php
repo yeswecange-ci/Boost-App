@@ -58,16 +58,18 @@ Route::middleware(['auth'])->group(function () {
     // ─── Boost — Validation N+1 ─────────────────────────────
     // IMPORTANT : routes statiques AVANT la route dynamique /{boost}
     Route::middleware(['role:validator_n1,validator,admin'])->group(function () {
-        Route::get('/boost/pending-n1',              [ValidatorController::class, 'pendingN1'])->name('boost.pending-n1');
-        Route::post('/boost/{boost}/approve-n1',     [ValidatorController::class, 'approveN1'])->name('boost.approve-n1');
-        Route::post('/boost/{boost}/reject-n1',      [ValidatorController::class, 'rejectN1'])->name('boost.reject-n1');
+        Route::get('/boost/pending-n1',                    [ValidatorController::class, 'pendingN1'])->name('boost.pending-n1');
+        Route::post('/boost/{boost}/approve-n1',           [ValidatorController::class, 'approveN1'])->name('boost.approve-n1');
+        Route::post('/boost/{boost}/reject-n1',            [ValidatorController::class, 'rejectN1'])->name('boost.reject-n1');
+        Route::post('/boost/{boost}/request-changes-n1',   [ValidatorController::class, 'requestChangesN1'])->name('boost.request-changes-n1');
     });
 
     // ─── Boost — Validation N+2 ─────────────────────────────
     Route::middleware(['role:validator_n2,admin'])->group(function () {
-        Route::get('/boost/pending-n2',              [ValidatorController::class, 'pendingN2'])->name('boost.pending-n2');
-        Route::post('/boost/{boost}/approve-n2',     [ValidatorController::class, 'approveN2'])->name('boost.approve-n2');
-        Route::post('/boost/{boost}/reject-n2',      [ValidatorController::class, 'rejectN2'])->name('boost.reject-n2');
+        Route::get('/boost/pending-n2',                    [ValidatorController::class, 'pendingN2'])->name('boost.pending-n2');
+        Route::post('/boost/{boost}/approve-n2',           [ValidatorController::class, 'approveN2'])->name('boost.approve-n2');
+        Route::post('/boost/{boost}/reject-n2',            [ValidatorController::class, 'rejectN2'])->name('boost.reject-n2');
+        Route::post('/boost/{boost}/request-changes-n2',   [ValidatorController::class, 'requestChangesN2'])->name('boost.request-changes-n2');
     });
 
     // ─── Boost — Actions post-N8N (tous validateurs + admin) ─
@@ -75,6 +77,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/boost/all',                  [ValidatorController::class, 'all'])->name('boost.all');
         Route::post('/boost/{boost}/activate',    [ValidatorController::class, 'activate'])->name('boost.activate');
         Route::post('/boost/{boost}/pause',       [ValidatorController::class, 'pause'])->name('boost.pause');
+        Route::post('/boost/{boost}/cancel',      [ValidatorController::class, 'cancel'])->name('boost.cancel');
         Route::post('/boost/{boost}/retry-n8n',   [ValidatorController::class, 'retryN8n'])->name('boost.retry-n8n');
     });
 

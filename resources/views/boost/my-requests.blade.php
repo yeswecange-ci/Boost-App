@@ -18,6 +18,8 @@ $statusMap = [
     'active'       => ['label'=>'Actif',           'class'=>'badge-status-active'],
     'paused'       => ['label'=>'En pause',        'class'=>'badge-status-paused'],
     'completed'    => ['label'=>'Terminé',         'class'=>'badge-status-completed'],
+    'cancelled'    => ['label'=>'Annulé',          'class'=>'badge-status-rejected'],
+    'failed'       => ['label'=>'Échec',           'class'=>'badge-status-rejected'],
 ];
 $currentStatus = request('status');
 $tabs = [

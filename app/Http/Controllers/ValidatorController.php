@@ -132,6 +132,37 @@ class ValidatorController extends Controller
     }
 
     /**
+     * Validation N+1 : Demander modification → repasse en DRAFT
+     */
+    public function requestChangesN1(Request $request, BoostRequest $boost)
+    {
+        abort_if($boost->status !== 'pending_n1', 422, 'Ce boost ne peut pas faire l\'objet d\'une demande de modification N+1.');
+
+        $request->validate([
+            'comment' => 'required|string|min:10|max:500',
+        ]);
+
+        Approval::create([
+            'boost_request_id' => $boost->id,
+            'level'            => 'N1',
+            'action'           => 'changes_requested',
+            'comment'          => $request->comment,
+            'user_id'          => auth()->id(),
+        ]);
+
+        $boost->update([
+            'status'           => 'draft',
+            'rejection_reason' => $request->comment,
+        ]);
+
+        $boost->operator->notify(new BoostRejectedNotification($boost));
+
+        return redirect()->back()->with('success',
+            "Boost #{$boost->id} renvoyé à l'opérateur pour modification."
+        );
+    }
+
+    /**
      * Validation N+1 : Rejeter
      */
     public function rejectN1(Request $request, BoostRequest $boost)
@@ -234,9 +265,61 @@ class ValidatorController extends Controller
         return redirect()->back()->with('success', "Boost #" . $boost->id . " rejeté N+2.");
     }
 
+    /**
+     * Validation N+2 : Demander modification → repasse en DRAFT
+     */
+    public function requestChangesN2(Request $request, BoostRequest $boost)
+    {
+        abort_if($boost->status !== 'pending_n2', 422, 'Ce boost ne peut pas faire l\'objet d\'une demande de modification N+2.');
+
+        $request->validate([
+            'comment' => 'required|string|min:10|max:500',
+        ]);
+
+        Approval::create([
+            'boost_request_id' => $boost->id,
+            'level'            => 'N2',
+            'action'           => 'changes_requested',
+            'comment'          => $request->comment,
+            'user_id'          => auth()->id(),
+        ]);
+
+        $boost->update([
+            'status'           => 'draft',
+            'rejection_reason' => $request->comment,
+        ]);
+
+        $boost->operator->notify(new BoostRejectedNotification($boost));
+
+        return redirect()->back()->with('success',
+            "Boost #{$boost->id} renvoyé à l'opérateur pour modification."
+        );
+    }
+
     // ─────────────────────────────────────────────────────────
     // Actions post-N8N
     // ─────────────────────────────────────────────────────────
+
+    /**
+     * Annuler une campagne en attente d'activation (paused_ready)
+     */
+    public function cancel(Request $request, BoostRequest $boost)
+    {
+        abort_if($boost->status !== 'paused_ready', 422, 'Seules les campagnes prêtes (paused_ready) peuvent être annulées.');
+
+        $request->validate([
+            'comment' => 'nullable|string|max:500',
+        ]);
+
+        $boost->update([
+            'status'           => 'cancelled',
+            'rejection_reason' => $request->comment,
+        ]);
+
+        $boost->operator->notify(new BoostRejectedNotification($boost));
+
+        return redirect()->back()->with('success', "Boost #{$boost->id} annulé.");
+    }
 
     /**
      * Activer la campagne Meta (elle est en PAUSE après création N8N)

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BoostRequest;
+use App\Models\FacebookPage;
 use App\Services\SettingService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -157,10 +158,16 @@ class N8nWebhookService
      */
     private function buildCreatePayload(BoostRequest $boost): array
     {
+        $page = FacebookPage::where('page_id', $boost->page_id)->first();
+
         return [
             // Identification
-            'boost_id'     => $boost->id,
-            'callback_url' => route('webhook.n8n.boost-created'),
+            'boost_id'      => $boost->id,
+            'callback_url'  => route('webhook.n8n.boost-created'),
+            'mode'          => 'CREATE_PAUSED',
+
+            // Compte publicitaire Meta (act_XXXXXXXXX) — requis par l'API Meta Ads
+            'ad_account_id' => $page?->ad_account_id,
 
             // Post Facebook à booster
             'post_id'   => $boost->post_id,
@@ -168,11 +175,19 @@ class N8nWebhookService
             'page_name' => $boost->page_name,
             'post_url'  => $boost->post_url,
 
+            // Objectif de campagne (toujours OUTCOME_TRAFFIC vers WhatsApp)
+            'objective' => 'OUTCOME_TRAFFIC',
+
+            // Noms des entités Meta (générés par n8n si non fournis)
+            'campaign_name' => "Boost #{$boost->id} — {$boost->page_name}",
+            'adset_name'    => "AdSet #{$boost->id} — " . $boost->start_date->format('d/m/Y'),
+            'ad_name'       => "Ad #{$boost->id}",
+
             // Paramètres de campagne
-            'start_date' => $boost->start_date->format('Y-m-d'),
-            'end_date'   => $boost->end_date->format('Y-m-d'),
-            'budget'     => (float) $boost->budget,
-            'currency'   => $boost->currency,
+            'start_date'      => $boost->start_date->format('Y-m-d'),
+            'end_date'        => $boost->end_date->format('Y-m-d'),
+            'lifetime_budget' => (float) $boost->budget,
+            'currency'        => $boost->currency,
 
             // Audience
             'target' => [

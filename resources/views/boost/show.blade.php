@@ -17,6 +17,7 @@ $statusMap = [
     'active'        => ['label'=>'Actif',           'class'=>'badge-status-active',    'icon'=>'fa-play-circle'],
     'paused'        => ['label'=>'En pause',        'class'=>'badge-status-paused',    'icon'=>'fa-pause'],
     'completed'     => ['label'=>'Terminé',         'class'=>'badge-status-completed', 'icon'=>'fa-flag-checkered'],
+    'cancelled'     => ['label'=>'Annulé',          'class'=>'badge-status-rejected',  'icon'=>'fa-ban'],
     'failed'        => ['label'=>'Échec',           'class'=>'badge-status-rejected',  'icon'=>'fa-exclamation-circle'],
 ];
 $s = $statusMap[$boost->status] ?? ['label'=>ucfirst($boost->status), 'class'=>'badge-status-draft', 'icon'=>'fa-circle'];
@@ -192,7 +193,7 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
 
         {{-- ─── Actions validateur N+1 ─── --}}
         @if($boost->status === 'pending_n1' && auth()->user()->hasRole(['validator_n1','validator','admin']))
-        <div class="card" x-data="{ rejectOpen: false }">
+        <div class="card" x-data="{ rejectOpen: false, changesOpen: false }">
             <div class="card-header">
                 <i class="fas fa-gavel" style="color:var(--color-primary);"></i>
                 Validation N+1
@@ -216,7 +217,24 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
                     </button>
                 </form>
 
-                <button @click="rejectOpen = !rejectOpen" class="btn-danger" style="width:100%; justify-content:center;">
+                <button @click="changesOpen = !changesOpen; rejectOpen = false" class="btn-secondary" style="width:100%; justify-content:center;">
+                    <i class="fas fa-edit"></i>
+                    Demander modification
+                </button>
+
+                <div x-show="changesOpen" x-cloak>
+                    <form method="POST" action="{{ route('boost.request-changes-n1', $boost->id) }}" style="display:flex; gap:0.5rem;">
+                        @csrf
+                        <textarea name="comment" class="form-control" rows="2"
+                                  placeholder="Décrivez les modifications demandées (min. 10 caractères)..."
+                                  required style="flex:1; resize:vertical;"></textarea>
+                        <button type="submit" class="btn-secondary btn-sm" style="align-self:flex-end;">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <button @click="rejectOpen = !rejectOpen; changesOpen = false" class="btn-danger" style="width:100%; justify-content:center;">
                     <i class="fas fa-times"></i>
                     Rejeter N+1
                 </button>
@@ -238,7 +256,7 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
 
         {{-- ─── Actions validateur N+2 ─── --}}
         @if($boost->status === 'pending_n2' && auth()->user()->hasRole(['validator_n2','admin']))
-        <div class="card" x-data="{ rejectOpen: false }">
+        <div class="card" x-data="{ rejectOpen: false, changesOpen: false }">
             <div class="card-header" style="background:#f5f3ff; border-color:#ddd6fe;">
                 <i class="fas fa-shield-halved" style="color:#7c3aed;"></i>
                 <span style="color:#5b21b6;">Validation N+2 (décision finale)</span>
@@ -258,7 +276,24 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
                     </button>
                 </form>
 
-                <button @click="rejectOpen = !rejectOpen" class="btn-danger" style="width:100%; justify-content:center;">
+                <button @click="changesOpen = !changesOpen; rejectOpen = false" class="btn-secondary" style="width:100%; justify-content:center;">
+                    <i class="fas fa-edit"></i>
+                    Demander modification
+                </button>
+
+                <div x-show="changesOpen" x-cloak>
+                    <form method="POST" action="{{ route('boost.request-changes-n2', $boost->id) }}" style="display:flex; gap:0.5rem;">
+                        @csrf
+                        <textarea name="comment" class="form-control" rows="2"
+                                  placeholder="Décrivez les modifications demandées (min. 10 caractères)..."
+                                  required style="flex:1; resize:vertical;"></textarea>
+                        <button type="submit" class="btn-secondary btn-sm" style="align-self:flex-end;">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <button @click="rejectOpen = !rejectOpen; changesOpen = false" class="btn-danger" style="width:100%; justify-content:center;">
                     <i class="fas fa-times"></i>
                     Rejeter N+2
                 </button>
@@ -280,13 +315,13 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
 
         {{-- Activation --}}
         @if($boost->status === 'paused_ready' && auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']))
-        <div class="card">
+        <div class="card" x-data="{ cancelOpen: false }">
             <div class="card-header" style="background:#f0fdf4; border-color:#bbf7d0;">
                 <i class="fas fa-play-circle" style="color:#16a34a;"></i>
                 <span style="color:#166534;">Campagne prête — En attente d'activation</span>
             </div>
-            <div class="card-body">
-                <p style="font-size:0.875rem; color:#374151; margin:0 0 1rem;">
+            <div class="card-body" style="display:flex; flex-direction:column; gap:0.75rem;">
+                <p style="font-size:0.875rem; color:#374151; margin:0;">
                     La campagne a été créée sur Meta Ads et est en <strong>PAUSE</strong>.
                     Vérifiez les paramètres, puis activez-la.
                 </p>
@@ -298,6 +333,24 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
                         Activer la campagne Meta
                     </button>
                 </form>
+
+                <button @click="cancelOpen = !cancelOpen" class="btn-danger" style="width:100%; justify-content:center;">
+                    <i class="fas fa-ban"></i>
+                    Annuler la campagne
+                </button>
+
+                <div x-show="cancelOpen" x-cloak>
+                    <form method="POST" action="{{ route('boost.cancel', $boost->id) }}" style="display:flex; gap:0.5rem;"
+                          onsubmit="return confirm('Annuler définitivement le boost #{{ $boost->id }} ?')">
+                        @csrf
+                        <textarea name="comment" class="form-control" rows="2"
+                                  placeholder="Raison de l'annulation (optionnel)..."
+                                  style="flex:1; resize:vertical;"></textarea>
+                        <button type="submit" class="btn-danger btn-sm" style="align-self:flex-end;">
+                            <i class="fas fa-ban"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
         @endif
@@ -474,15 +527,20 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
             <div class="card-body">
                 <div style="display:flex; flex-direction:column; gap:0.875rem;">
                     @foreach($boost->approvals as $approval)
-                    <div style="padding:0.75rem; background:#f8fafc; border-radius:0.5rem; border-left:3px solid {{ $approval->isApproved() ? '#22c55e' : '#ef4444' }};">
+                    @php
+                        $approvalColor = $approval->isApproved() ? '#22c55e' : ($approval->action === 'changes_requested' ? '#f59e0b' : '#ef4444');
+                        $approvalBg    = $approval->isApproved() ? '#dcfce7' : ($approval->action === 'changes_requested' ? '#fef3c7' : '#fee2e2');
+                        $approvalFg    = $approval->isApproved() ? '#166534' : ($approval->action === 'changes_requested' ? '#92400e' : '#991b1b');
+                        $approvalLabel = $approval->isApproved() ? 'Approuvé' : ($approval->action === 'changes_requested' ? 'Modif. demandée' : 'Rejeté');
+                    @endphp
+                    <div style="padding:0.75rem; background:#f8fafc; border-radius:0.5rem; border-left:3px solid {{ $approvalColor }};">
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.25rem;">
                             <span style="font-weight:600; font-size:0.875rem; color:#0f172a;">
                                 {{ $approval->user->name }}
                             </span>
                             <span style="font-size:0.75rem; padding:0.1rem 0.5rem; border-radius:9999px;
-                                         background:{{ $approval->isApproved() ? '#dcfce7' : '#fee2e2' }};
-                                         color:{{ $approval->isApproved() ? '#166534' : '#991b1b' }}; font-weight:600;">
-                                N+{{ $approval->level === 'N1' ? '1' : '2' }} — {{ $approval->isApproved() ? 'Approuvé' : 'Rejeté' }}
+                                         background:{{ $approvalBg }}; color:{{ $approvalFg }}; font-weight:600;">
+                                N+{{ $approval->level === 'N1' ? '1' : '2' }} — {{ $approvalLabel }}
                             </span>
                         </div>
                         <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:{{ $approval->comment ? '0.375rem' : '0' }};">
