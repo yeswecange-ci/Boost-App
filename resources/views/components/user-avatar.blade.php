@@ -15,7 +15,7 @@
 
     if ($user->avatar) {
         if (str_starts_with($user->avatar, 'avatars/')) {
-            $__imgSrc = Storage::url($user->avatar);
+            $__imgSrc = asset('storage/' . $user->avatar);
         } elseif (str_starts_with($user->avatar, 'preset:')) {
             $__gradient = $__presets[str_replace('preset:', '', $user->avatar)] ?? $__gradient;
         }

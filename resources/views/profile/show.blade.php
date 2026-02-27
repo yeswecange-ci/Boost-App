@@ -50,7 +50,7 @@
                         flex-shrink:0;
                     ">
                         @if($avatarIsImage)
-                            <img src="{{ Storage::url($user->avatar) }}" alt="Avatar"
+                            <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar"
                                  style="width:100%; height:100%; object-fit:cover;" id="avatar-img">
                         @else
                             <span id="avatar-initials">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
