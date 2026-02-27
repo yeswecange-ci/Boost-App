@@ -1,9 +1,4 @@
 @import "tailwindcss";
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/inter/700.css";
-@import "@fortawesome/fontawesome-free/css/all.min.css";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -103,6 +98,43 @@ body {
     text-align: center;
     flex-shrink: 0;
 }
+
+/* ─── Button loading state ──────────────────────────────────── */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: lspin .65s linear infinite;
+}
+
+/* Pour les boutons clairs (secondary) */
+.btn-secondary.btn-loading::after,
+.btn-loading.btn-secondary::after {
+    border-color: rgba(79,70,229,0.25);
+    border-top-color: var(--color-primary);
+}
+
+/* Bouton auth (page login) */
+.btn-auth.btn-loading::after {
+    border-color: rgba(255,255,255,0.35);
+    border-top-color: #ffffff;
+}
+
+@keyframes lspin { to { transform: translate(-50%,-50%) rotate(360deg); } }
 
 /* ─── Buttons ───────────────────────────────────────────────── */
 .btn-primary {

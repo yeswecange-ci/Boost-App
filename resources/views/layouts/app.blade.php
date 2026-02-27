@@ -7,9 +7,25 @@
 
     <title>{{ $pageTitle ?? config('app.name', 'Boost Manager') }}</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Loader inline : s'affiche AVANT que les assets Vite soient prêts --}}
+    <style>
+        #page-loader{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease,visibility .3s ease}
+        #page-loader.loader-fade-out{opacity:0;visibility:hidden}
+        .loader-ring{width:42px;height:42px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:lspin .65s linear infinite}
+        @keyframes lspin{to{transform:rotate(360deg)}}
+    </style>
 </head>
 <body x-data="{ sidebarOpen: false }">
+
+<div id="page-loader"><div class="loader-ring"></div></div>
 
 {{-- ─── SIDEBAR ──────────────────────────────────────────────── --}}
 <aside class="sidebar" :class="{ 'open': sidebarOpen }">

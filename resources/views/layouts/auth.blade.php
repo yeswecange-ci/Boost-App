@@ -15,6 +15,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
+        #page-loader{position:fixed;inset:0;background:#f1f5f9;z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease,visibility .3s ease}
+        #page-loader.loader-fade-out{opacity:0;visibility:hidden}
+        .loader-ring{width:42px;height:42px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:lspin .65s linear infinite}
+        @keyframes lspin{to{transform:rotate(360deg)}}
         *, *::before, *::after { box-sizing: border-box; }
 
         body {
@@ -144,6 +148,8 @@
     </style>
 </head>
 <body>
+
+<div id="page-loader"><div class="loader-ring"></div></div>
 
     <div class="auth-brand">
         <div class="auth-brand-logo">
