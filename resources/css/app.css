@@ -118,7 +118,7 @@ body {
     border: 2px solid rgba(255,255,255,0.35);
     border-top-color: #ffffff;
     border-radius: 50%;
-    animation: lspin .65s linear infinite;
+    animation: btn-spin .65s linear infinite;
 }
 
 /* Pour les boutons clairs (secondary) */
@@ -134,7 +134,7 @@ body {
     border-top-color: #ffffff;
 }
 
-@keyframes lspin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+@keyframes btn-spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
 
 /* ─── Buttons ───────────────────────────────────────────────── */
 .btn-primary {

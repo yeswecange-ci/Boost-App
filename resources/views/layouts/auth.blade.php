@@ -15,10 +15,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        #page-loader{position:fixed;inset:0;background:#f1f5f9;z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease,visibility .3s ease}
-        #page-loader.loader-fade-out{opacity:0;visibility:hidden}
-        .loader-ring{width:42px;height:42px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:lspin .65s linear infinite}
-        @keyframes lspin{to{transform:rotate(360deg)}}
+        #page-loader{position:fixed;inset:0;background:#f1f5f9;z-index:9999;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .35s ease,visibility 0s linear 0s;will-change:opacity}
+        #page-loader.loader-fade-out{opacity:0;visibility:hidden;transition:opacity .35s ease,visibility 0s linear .35s}
+        .loader-ring{width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:page-spin .7s linear infinite;will-change:transform}
+        @keyframes page-spin{to{transform:rotate(360deg)}}
         *, *::before, *::after { box-sizing: border-box; }
 
         body {
