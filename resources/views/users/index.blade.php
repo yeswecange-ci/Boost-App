@@ -66,22 +66,13 @@ $tabs = [
                 @php
                     $userRole    = $user->roles->first()?->name;
                     $roleInfo    = $roleLabels[$userRole] ?? ['label' => ucfirst($userRole ?? '—'), 'color' => '#64748b', 'bg' => '#f1f5f9'];
-                    $initials    = strtoupper(substr($user->name, 0, 1));
                     $isSelf      = $user->id === auth()->id();
                 @endphp
                 <tr>
                     <td style="color:#94a3b8; font-size:0.8125rem; font-weight:500;">#{{ $user->id }}</td>
                     <td>
                         <div style="display:flex; align-items:center; gap:0.625rem;">
-                            <div style="
-                                width: 36px; height: 36px;
-                                background: linear-gradient(135deg, #4f46e5, #7c3aed);
-                                border-radius: 50%;
-                                display: flex; align-items: center; justify-content: center;
-                                color: white; font-size: 0.875rem; font-weight: 700; flex-shrink: 0;
-                            ">
-                                {{ $initials }}
-                            </div>
+                            <x-user-avatar :user="$user" :size="36" />
                             <div>
                                 <div style="font-weight:500; font-size:0.875rem; color:#0f172a;">
                                     {{ $user->name }}

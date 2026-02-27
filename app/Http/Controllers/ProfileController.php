@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -65,7 +66,7 @@ class ProfileController extends Controller
                 Storage::disk('public')->delete($user->avatar);
             }
 
-            $path = $request->file('avatar_file')->store('avatars', 'public');
+            $path = $this->resizeAndStore($request->file('avatar_file'));
             $user->update(['avatar' => $path]);
 
             return back()->with('success_avatar', 'Photo de profil mise à jour.');
@@ -91,5 +92,54 @@ class ProfileController extends Controller
         }
 
         return back()->withErrors(['avatar' => 'Aucune image ou avatar fourni.']);
+    }
+
+    /**
+     * Redimensionne l'image en carré 200×200px (GD natif) et la sauvegarde en JPEG.
+     * Retourne le chemin relatif dans le disque public (ex: "avatars/xxx.jpg").
+     */
+    private function resizeAndStore(UploadedFile $file): string
+    {
+        $targetSize = 200;
+        $mime = $file->getMimeType();
+
+        $src = match (true) {
+            str_contains($mime, 'jpeg') => @imagecreatefromjpeg($file->getPathname()),
+            str_contains($mime, 'png')  => @imagecreatefrompng($file->getPathname()),
+            str_contains($mime, 'gif')  => @imagecreatefromgif($file->getPathname()),
+            str_contains($mime, 'webp') => @imagecreatefromwebp($file->getPathname()),
+            default                     => null,
+        };
+
+        // GD non disponible ou format non supporté → sauvegarde directe
+        if (! $src) {
+            return $file->store('avatars', 'public');
+        }
+
+        $srcW = imagesx($src);
+        $srcH = imagesy($src);
+
+        // Crop carré centré
+        $cropSize = min($srcW, $srcH);
+        $cropX    = intval(($srcW - $cropSize) / 2);
+        $cropY    = intval(($srcH - $cropSize) / 2);
+
+        $dst = imagecreatetruecolor($targetSize, $targetSize);
+        // Fond blanc pour les PNG/GIF avec transparence
+        imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+        imagecopyresampled($dst, $src, 0, 0, $cropX, $cropY, $targetSize, $targetSize, $cropSize, $cropSize);
+
+        $filename  = 'avatars/' . uniqid('av_', true) . '.jpg';
+        $fullPath  = storage_path('app/public/' . $filename);
+
+        if (! is_dir(dirname($fullPath))) {
+            mkdir(dirname($fullPath), 0755, true);
+        }
+
+        imagejpeg($dst, $fullPath, 85);
+        imagedestroy($src);
+        imagedestroy($dst);
+
+        return $filename;
     }
 }

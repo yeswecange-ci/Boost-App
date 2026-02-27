@@ -96,15 +96,7 @@ $tabs = [
                     </td>
                     <td>
                         <div style="display:flex; align-items:center; gap:0.5rem;">
-                            <div style="
-                                width:28px; height:28px;
-                                background:linear-gradient(135deg,#4f46e5,#7c3aed);
-                                border-radius:50%;
-                                display:flex; align-items:center; justify-content:center;
-                                color:white; font-size:0.6875rem; font-weight:700; flex-shrink:0;
-                            ">
-                                {{ strtoupper(substr($boost->operator->name, 0, 1)) }}
-                            </div>
+                            <x-user-avatar :user="$boost->operator" :size="28" />
                             <span style="font-size:0.875rem; color:#374151;">{{ $boost->operator->name }}</span>
                         </div>
                     </td>

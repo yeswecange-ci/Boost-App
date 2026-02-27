@@ -6,12 +6,6 @@
 @php
     $user = auth()->user();
 
-    // Resolve avatar display
-    $avatarIsImage = $user->avatar && str_starts_with($user->avatar, 'avatars/');
-    $avatarPreset  = $user->avatar && str_starts_with($user->avatar, 'preset:')
-                     ? str_replace('preset:', '', $user->avatar)
-                     : null;
-
     $presetGradients = [
         'indigo'  => 'linear-gradient(135deg, #4f46e5, #7c3aed)',
         'violet'  => 'linear-gradient(135deg, #7c3aed, #a855f7)',
@@ -21,7 +15,11 @@
         'sky'     => 'linear-gradient(135deg, #0284c7, #38bdf8)',
         'slate'   => 'linear-gradient(135deg, #475569, #64748b)',
     ];
-    $currentGradient = $presetGradients[$avatarPreset ?? 'indigo'];
+
+    $avatarIsImage   = $user->avatar && str_starts_with($user->avatar, 'avatars/');
+    $avatarPresetKey = ($user->avatar && str_starts_with($user->avatar, 'preset:'))
+                       ? str_replace('preset:', '', $user->avatar) : null;
+    $currentGradient = $presetGradients[$avatarPresetKey ?? 'indigo'];
 @endphp
 
 <div style="max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
