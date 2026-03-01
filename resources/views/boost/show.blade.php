@@ -30,10 +30,23 @@ $sensColors = [
 $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
 @endphp
 
+@php
+// Détermine l'URL de retour selon le rôle de l'utilisateur et le statut du boost.
+$backUrl = match(true) {
+    auth()->user()->hasRole(['validator_n2','admin']) && $boost->status === 'pending_n2'
+        => route('boost.pending-n2'),
+    auth()->user()->hasRole(['validator_n1','validator','admin']) && $boost->status === 'pending_n1'
+        => route('boost.pending-n1'),
+    auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin'])
+        => route('boost.all'),
+    default => route('boost.my-requests'),
+};
+@endphp
+
 {{-- Page header --}}
 <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
     <div style="display:flex; align-items:center; gap:0.75rem;">
-        <a href="{{ route('boost.my-requests') }}" style="display:flex; align-items:center; justify-content:center; width:2rem; height:2rem; border-radius:0.5rem; background:#f1f5f9; color:#64748b; text-decoration:none; font-size:0.875rem; flex-shrink:0;"
+        <a href="{{ $backUrl }}" style="display:flex; align-items:center; justify-content:center; width:2rem; height:2rem; border-radius:0.5rem; background:#f1f5f9; color:#64748b; text-decoration:none; font-size:0.875rem; flex-shrink:0;"
            onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
             <i class="fas fa-arrow-left"></i>
         </a>
@@ -169,12 +182,22 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
         </div>
         @endif
 
-        {{-- Rejection reason --}}
-        @if(in_array($boost->status, ['rejected_n1','rejected_n2']) && $boost->rejection_reason)
+        {{-- Motif de rejet ou de renvoi pour modification --}}
+        @if($boost->rejection_reason && in_array($boost->status, ['rejected_n1','rejected_n2','draft','cancelled']))
+        @php
+            $reasonTitle = match($boost->status) {
+                'rejected_n1' => 'Raison du rejet N+1',
+                'rejected_n2' => 'Raison du rejet N+2',
+                'cancelled'   => 'Motif d\'annulation',
+                default       => 'Modifications demandées par le validateur',
+            };
+            $reasonIcon = in_array($boost->status, ['rejected_n1','rejected_n2','cancelled'])
+                ? 'fa-times-circle' : 'fa-edit';
+        @endphp
         <div class="alert alert-danger">
             <div style="font-weight:600; margin-bottom:0.375rem;">
-                <i class="fas fa-times-circle" style="margin-right:0.375rem;"></i>
-                Raison du rejet ({{ $boost->status === 'rejected_n1' ? 'N+1' : 'N+2' }})
+                <i class="fas {{ $reasonIcon }}" style="margin-right:0.375rem;"></i>
+                {{ $reasonTitle }}
             </div>
             {{ $boost->rejection_reason }}
         </div>
@@ -453,18 +476,21 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
             <div class="card-body">
                 @php
                 $steps = [
-                    ['status'=>['draft'],                            'label'=>'Brouillon créé',         'icon'=>'fa-file-alt'],
-                    ['status'=>['pending_n1'],                       'label'=>'Soumis — validation N+1','icon'=>'fa-clock'],
-                    ['status'=>['rejected_n1'],                      'label'=>'Rejeté N+1',             'icon'=>'fa-times-circle'],
+                    ['status'=>['draft'],                            'label'=>'Brouillon créé',           'icon'=>'fa-file-alt'],
+                    ['status'=>['pending_n1'],                       'label'=>'Soumis — validation N+1',  'icon'=>'fa-clock'],
+                    ['status'=>['rejected_n1'],                      'label'=>'Rejeté N+1',               'icon'=>'fa-times-circle'],
                     ['status'=>['pending_n2'],                       'label'=>'Escaladé — validation N+2','icon'=>'fa-shield-halved'],
-                    ['status'=>['rejected_n2'],                      'label'=>'Rejeté N+2',             'icon'=>'fa-times-circle'],
-                    ['status'=>['approved'],                         'label'=>'Approuvé',               'icon'=>'fa-check-circle'],
-                    ['status'=>['creating'],                         'label'=>'N8N crée la campagne…', 'icon'=>'fa-spinner'],
-                    ['status'=>['paused_ready'],                     'label'=>'Campagne prête (pause)', 'icon'=>'fa-pause-circle'],
-                    ['status'=>['active'],                           'label'=>'Campagne active',        'icon'=>'fa-play-circle'],
-                    ['status'=>['completed'],                        'label'=>'Terminé',                'icon'=>'fa-flag-checkered'],
+                    ['status'=>['rejected_n2'],                      'label'=>'Rejeté N+2',               'icon'=>'fa-times-circle'],
+                    ['status'=>['approved'],                         'label'=>'Approuvé',                 'icon'=>'fa-check-circle'],
+                    ['status'=>['creating'],                         'label'=>'N8N crée la campagne…',   'icon'=>'fa-spinner'],
+                    ['status'=>['paused_ready'],                     'label'=>'Campagne prête (pause)',   'icon'=>'fa-pause-circle'],
+                    ['status'=>['cancelled'],                        'label'=>'Annulé',                   'icon'=>'fa-ban'],
+                    ['status'=>['active'],                           'label'=>'Campagne active',          'icon'=>'fa-play-circle'],
+                    ['status'=>['paused'],                           'label'=>'En pause',                 'icon'=>'fa-pause'],
+                    ['status'=>['completed'],                        'label'=>'Terminé',                  'icon'=>'fa-flag-checkered'],
+                    ['status'=>['failed'],                           'label'=>'Échec N8N',                'icon'=>'fa-exclamation-circle'],
                 ];
-                $allStatuses = ['draft','pending_n1','rejected_n1','pending_n2','rejected_n2','approved','creating','paused_ready','active','paused','completed','failed'];
+                $allStatuses = ['draft','pending_n1','rejected_n1','pending_n2','rejected_n2','approved','creating','paused_ready','cancelled','active','paused','completed','failed'];
                 $currentIndex = array_search($boost->status, $allStatuses);
                 @endphp
 
@@ -511,7 +537,7 @@ $sc = $sensColors[$boost->sensitivity] ?? $sensColors['faible'];
                     </div>
                     <div>
                         <i class="fas fa-user" style="width:1rem;"></i>
-                        Par {{ $boost->operator->name }}
+                        Par {{ $boost->operator?->name ?? '(compte supprimé)' }}
                     </div>
                 </div>
             </div>

@@ -14,9 +14,7 @@
             <i class="fas fa-rocket"></i>
         </div>
         <div>
-            <div class="stat-value">
-                {{ \App\Models\BoostRequest::when(!auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']), fn($q) => $q->where('operator_id', auth()->id()))->count() }}
-            </div>
+            <div class="stat-value">{{ $totalBoosts }}</div>
             <div class="stat-label">Total boosts</div>
         </div>
     </div>
@@ -27,9 +25,7 @@
             <i class="fas fa-clock"></i>
         </div>
         <div>
-            <div class="stat-value">
-                {{ \App\Models\BoostRequest::when(!auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']), fn($q) => $q->where('operator_id', auth()->id()))->whereIn('status',['pending_n1','pending_n2'])->count() }}
-            </div>
+            <div class="stat-value">{{ $pendingCount }}</div>
             <div class="stat-label">En attente</div>
         </div>
     </div>
@@ -40,28 +36,25 @@
             <i class="fas fa-play-circle"></i>
         </div>
         <div>
-            <div class="stat-value">
-                {{ \App\Models\BoostRequest::when(!auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']), fn($q) => $q->where('operator_id', auth()->id()))->where('status','active')->count() }}
-            </div>
+            <div class="stat-value">{{ $activeCount }}</div>
             <div class="stat-label">Campagnes actives</div>
         </div>
     </div>
 
-    {{-- Budget total --}}
+    {{-- Budget par devise --}}
     <div class="stat-card">
         <div class="stat-icon" style="background:#f3e8ff; color:#7c3aed;">
             <i class="fas fa-coins"></i>
         </div>
         <div>
-            <div class="stat-value" style="font-size:1.125rem;">
-                @php
-                    $totalBudget = \App\Models\BoostRequest::when(!auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']), fn($q) => $q->where('operator_id', auth()->id()))
-                        ->whereIn('status', ['approved','paused_ready','active','completed'])
-                        ->sum('budget');
-                @endphp
-                {{ number_format($totalBudget, 0, ',', ' ') }} XOF
+            <div class="stat-value" style="font-size:1rem; line-height:1.4;">
+                @forelse($budgetByCurrency as $currency => $total)
+                <div>{{ number_format($total, 0, ',', ' ') }} <span style="font-size:0.75rem; font-weight:400; color:#94a3b8;">{{ $currency }}</span></div>
+                @empty
+                <div style="color:#94a3b8;">—</div>
+                @endforelse
             </div>
-            <div class="stat-label">Budget total approuvé</div>
+            <div class="stat-label">Budget approuvé</div>
         </div>
     </div>
 
@@ -74,19 +67,15 @@
             <i class="fas fa-history" style="color:var(--color-primary);"></i>
             Derniers boosts
         </div>
+        @if($isValidator)
+        {{-- Les validateurs voient tous les boosts, pas de création --}}
+        @else
         <a href="{{ route('posts.index') }}" class="btn-primary btn-sm">
             <i class="fas fa-plus"></i>
             Nouveau boost
         </a>
+        @endif
     </div>
-
-    @php
-        $recentBoosts = \App\Models\BoostRequest::with('operator')
-            ->when(!auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']), fn($q) => $q->where('operator_id', auth()->id()))
-            ->latest()
-            ->take(5)
-            ->get();
-    @endphp
 
     @if($recentBoosts->isEmpty())
     <div class="card-body" style="text-align:center; padding: 3rem 1.25rem; color:#64748b;">
@@ -105,7 +94,7 @@
                 <tr>
                     <th>#</th>
                     <th>Page / Post</th>
-                    @if(auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']))
+                    @if($isValidator)
                     <th>Opérateur</th>
                     @endif
                     <th>Période</th>
@@ -133,8 +122,8 @@
                             </div>
                         </div>
                     </td>
-                    @if(auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']))
-                    <td style="font-size:0.875rem; color:#374151;">{{ $boost->operator->name }}</td>
+                    @if($isValidator)
+                    <td style="font-size:0.875rem; color:#374151;">{{ $boost->operator?->name ?? '(supprimé)' }}</td>
                     @endif
                     <td>
                         <div style="font-size:0.8125rem;">{{ $boost->start_date->format('d/m/Y') }}</div>
@@ -176,7 +165,7 @@
         </table>
     </div>
     <div class="card-footer" style="display:flex; justify-content:flex-end;">
-        @if(auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']))
+        @if($isValidator)
         <a href="{{ route('boost.all') }}" style="font-size:0.875rem; color:var(--color-primary); text-decoration:none; font-weight:500;">
             Voir tous les boosts <i class="fas fa-arrow-right" style="font-size:0.75rem;"></i>
         </a>

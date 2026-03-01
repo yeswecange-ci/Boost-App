@@ -36,11 +36,13 @@ Route::middleware(['auth'])->group(function () {
     // Posts
     Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 
-    // ─── Boost — Opérateur ───────────────────────────────────
-    Route::get('/boost/my-requests',     [BoostController::class, 'myRequests'])->name('boost.my-requests');
-    Route::get('/boost/create',          [BoostController::class, 'create'])->name('boost.create');
-    Route::post('/boost',                [BoostController::class, 'store'])->name('boost.store');
-    Route::post('/boost/{boost}/submit', [BoostController::class, 'submit'])->name('boost.submit');
+    // ─── Boost — Opérateur (operator + admin uniquement) ─────
+    Route::middleware(['role:operator,admin'])->group(function () {
+        Route::get('/boost/my-requests',     [BoostController::class, 'myRequests'])->name('boost.my-requests');
+        Route::get('/boost/create',          [BoostController::class, 'create'])->name('boost.create');
+        Route::post('/boost',                [BoostController::class, 'store'])->name('boost.store');
+        Route::post('/boost/{boost}/submit', [BoostController::class, 'submit'])->name('boost.submit');
+    });
 
     // ─── Users (admin only) ──────────────────────────────────
     Route::middleware(['role:admin'])->prefix('users')->name('users.')->group(function () {

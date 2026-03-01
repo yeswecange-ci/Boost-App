@@ -7,10 +7,14 @@ use App\Models\BoostRequest;
 use App\Models\User;
 use App\Notifications\BoostApprovedNotification;
 use App\Notifications\BoostRejectedNotification;
+use App\Notifications\BoostChangesRequestedNotification;
+use App\Notifications\BoostCancelledNotification;
 use App\Notifications\BoostActivatedNotification;
 use App\Notifications\BoostPendingN2Notification;
 use App\Services\N8nWebhookService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ValidatorController extends Controller
 {
@@ -61,7 +65,7 @@ class ValidatorController extends Controller
             $query->where('status', $request->status);
         }
 
-        $boosts = $query->latest()->paginate(15);
+        $boosts = $query->latest()->paginate(15)->withQueryString();
 
         return view('boost.all', compact('boosts'));
     }
@@ -83,31 +87,36 @@ class ValidatorController extends Controller
             'comment' => 'nullable|string|max:500',
         ]);
 
-        // Enregistrer la décision dans l'historique
-        Approval::create([
-            'boost_request_id' => $boost->id,
-            'level'            => 'N1',
-            'action'           => 'approved',
-            'comment'          => $request->comment,
-            'user_id'          => auth()->id(),
-        ]);
+        // Transaction : approval + mise à jour statut atomiques
+        DB::transaction(function () use ($boost, $request) {
+            Approval::create([
+                'boost_request_id' => $boost->id,
+                'level'            => 'N1',
+                'action'           => 'approved',
+                'comment'          => $request->comment,
+                'user_id'          => auth()->id(),
+            ]);
 
-        $boost->update(['validator_id' => auth()->id()]);
+            $boost->update(['validator_id' => auth()->id()]);
 
-        // Routage selon la sensibilité
+            if ($boost->needsN2()) {
+                $boost->update(['status' => 'pending_n2']);
+            } else {
+                $boost->update(['status' => 'approved']);
+            }
+        });
+
+        // Invalide le cache des badges sidebar
+        Cache::forget('sidebar_n1_count');
+        Cache::forget('sidebar_n2_count');
+
+        // Notifications et N8N en dehors de la transaction
         if ($boost->needsN2()) {
-            // Sensibilité moyenne ou élevée → escalader vers N+2
-            $boost->update(['status' => 'pending_n2']);
-
-            // Notifier les validateurs N+2
             $n2Users = User::role('validator_n2')->get();
             foreach ($n2Users as $user) {
                 $user->notify(new BoostPendingN2Notification($boost));
             }
-            $admins = User::role('admin')->get();
-            foreach ($admins as $admin) {
-                $admin->notify(new BoostPendingN2Notification($boost));
-            }
+            User::role('admin')->get()->each(fn($a) => $a->notify(new BoostPendingN2Notification($boost)));
 
             return redirect()->back()->with('success',
                 "Boost #" . $boost->id . " validé N+1. Escaladé vers N+2 (sensibilité : {$boost->sensitivity})."
@@ -115,8 +124,7 @@ class ValidatorController extends Controller
         }
 
         // Sensibilité faible → approbation finale + déclencher N8N
-        $boost->update(['status' => 'approved']);
-        $boost->operator->notify(new BoostApprovedNotification($boost));
+        $boost->operator?->notify(new BoostApprovedNotification($boost));
 
         try {
             $this->n8n->triggerCreate($boost);
@@ -142,20 +150,23 @@ class ValidatorController extends Controller
             'comment' => 'required|string|min:10|max:500',
         ]);
 
-        Approval::create([
-            'boost_request_id' => $boost->id,
-            'level'            => 'N1',
-            'action'           => 'changes_requested',
-            'comment'          => $request->comment,
-            'user_id'          => auth()->id(),
-        ]);
+        DB::transaction(function () use ($boost, $request) {
+            Approval::create([
+                'boost_request_id' => $boost->id,
+                'level'            => 'N1',
+                'action'           => 'changes_requested',
+                'comment'          => $request->comment,
+                'user_id'          => auth()->id(),
+            ]);
 
-        $boost->update([
-            'status'           => 'draft',
-            'rejection_reason' => $request->comment,
-        ]);
+            $boost->update([
+                'status'           => 'draft',
+                'rejection_reason' => $request->comment,
+            ]);
+        });
 
-        $boost->operator->notify(new BoostRejectedNotification($boost));
+        Cache::forget('sidebar_n1_count');
+        $boost->operator?->notify(new BoostChangesRequestedNotification($boost));
 
         return redirect()->back()->with('success',
             "Boost #{$boost->id} renvoyé à l'opérateur pour modification."
@@ -173,21 +184,24 @@ class ValidatorController extends Controller
             'rejection_reason' => 'required|string|min:10|max:500',
         ]);
 
-        Approval::create([
-            'boost_request_id' => $boost->id,
-            'level'            => 'N1',
-            'action'           => 'rejected',
-            'comment'          => $request->rejection_reason,
-            'user_id'          => auth()->id(),
-        ]);
+        DB::transaction(function () use ($boost, $request) {
+            Approval::create([
+                'boost_request_id' => $boost->id,
+                'level'            => 'N1',
+                'action'           => 'rejected',
+                'comment'          => $request->rejection_reason,
+                'user_id'          => auth()->id(),
+            ]);
 
-        $boost->update([
-            'status'           => 'rejected_n1',
-            'validator_id'     => auth()->id(),
-            'rejection_reason' => $request->rejection_reason,
-        ]);
+            $boost->update([
+                'status'           => 'rejected_n1',
+                'validator_id'     => auth()->id(),
+                'rejection_reason' => $request->rejection_reason,
+            ]);
+        });
 
-        $boost->operator->notify(new BoostRejectedNotification($boost));
+        Cache::forget('sidebar_n1_count');
+        $boost->operator?->notify(new BoostRejectedNotification($boost));
 
         return redirect()->back()->with('success', "Boost #" . $boost->id . " rejeté N+1.");
     }
@@ -207,20 +221,23 @@ class ValidatorController extends Controller
             'comment' => 'nullable|string|max:500',
         ]);
 
-        Approval::create([
-            'boost_request_id' => $boost->id,
-            'level'            => 'N2',
-            'action'           => 'approved',
-            'comment'          => $request->comment,
-            'user_id'          => auth()->id(),
-        ]);
+        DB::transaction(function () use ($boost, $request) {
+            Approval::create([
+                'boost_request_id' => $boost->id,
+                'level'            => 'N2',
+                'action'           => 'approved',
+                'comment'          => $request->comment,
+                'user_id'          => auth()->id(),
+            ]);
 
-        $boost->update([
-            'status'       => 'approved',
-            'validator_id' => auth()->id(),
-        ]);
+            $boost->update([
+                'status'       => 'approved',
+                'validator_id' => auth()->id(),
+            ]);
+        });
 
-        $boost->operator->notify(new BoostApprovedNotification($boost));
+        Cache::forget('sidebar_n2_count');
+        $boost->operator?->notify(new BoostApprovedNotification($boost));
 
         try {
             $this->n8n->triggerCreate($boost);
@@ -246,21 +263,24 @@ class ValidatorController extends Controller
             'rejection_reason' => 'required|string|min:10|max:500',
         ]);
 
-        Approval::create([
-            'boost_request_id' => $boost->id,
-            'level'            => 'N2',
-            'action'           => 'rejected',
-            'comment'          => $request->rejection_reason,
-            'user_id'          => auth()->id(),
-        ]);
+        DB::transaction(function () use ($boost, $request) {
+            Approval::create([
+                'boost_request_id' => $boost->id,
+                'level'            => 'N2',
+                'action'           => 'rejected',
+                'comment'          => $request->rejection_reason,
+                'user_id'          => auth()->id(),
+            ]);
 
-        $boost->update([
-            'status'           => 'rejected_n2',
-            'validator_id'     => auth()->id(),
-            'rejection_reason' => $request->rejection_reason,
-        ]);
+            $boost->update([
+                'status'           => 'rejected_n2',
+                'validator_id'     => auth()->id(),
+                'rejection_reason' => $request->rejection_reason,
+            ]);
+        });
 
-        $boost->operator->notify(new BoostRejectedNotification($boost));
+        Cache::forget('sidebar_n2_count');
+        $boost->operator?->notify(new BoostRejectedNotification($boost));
 
         return redirect()->back()->with('success', "Boost #" . $boost->id . " rejeté N+2.");
     }
@@ -276,20 +296,23 @@ class ValidatorController extends Controller
             'comment' => 'required|string|min:10|max:500',
         ]);
 
-        Approval::create([
-            'boost_request_id' => $boost->id,
-            'level'            => 'N2',
-            'action'           => 'changes_requested',
-            'comment'          => $request->comment,
-            'user_id'          => auth()->id(),
-        ]);
+        DB::transaction(function () use ($boost, $request) {
+            Approval::create([
+                'boost_request_id' => $boost->id,
+                'level'            => 'N2',
+                'action'           => 'changes_requested',
+                'comment'          => $request->comment,
+                'user_id'          => auth()->id(),
+            ]);
 
-        $boost->update([
-            'status'           => 'draft',
-            'rejection_reason' => $request->comment,
-        ]);
+            $boost->update([
+                'status'           => 'draft',
+                'rejection_reason' => $request->comment,
+            ]);
+        });
 
-        $boost->operator->notify(new BoostRejectedNotification($boost));
+        Cache::forget('sidebar_n2_count');
+        $boost->operator?->notify(new BoostChangesRequestedNotification($boost));
 
         return redirect()->back()->with('success',
             "Boost #{$boost->id} renvoyé à l'opérateur pour modification."
@@ -316,7 +339,7 @@ class ValidatorController extends Controller
             'rejection_reason' => $request->comment,
         ]);
 
-        $boost->operator->notify(new BoostRejectedNotification($boost));
+        $boost->operator?->notify(new BoostCancelledNotification($boost));
 
         return redirect()->back()->with('success', "Boost #{$boost->id} annulé.");
     }

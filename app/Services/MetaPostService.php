@@ -17,7 +17,7 @@ class MetaPostService
         $version           = SettingService::get('meta.api_version', 'v21.0');
         $this->baseUrl     = 'https://graph.facebook.com/' . $version;
         $this->accessToken = SettingService::get('meta.access_token', '');
-        $this->mockMode    = SettingService::bool('meta.mock_mode', true);
+        $this->mockMode    = SettingService::bool('meta.mock_mode', false);
     }
 
     /**

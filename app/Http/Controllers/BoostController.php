@@ -47,12 +47,13 @@ class BoostController extends Controller
             'post_url'       => 'nullable|string',
             'post_thumbnail' => 'nullable|string',
             'post_message'   => 'nullable|string',
-            'start_date'     => 'required|date|after_or_equal:today',
+            // Tolérance d'1 jour pour absorber les décalages horaires serveur/client.
+            'start_date'     => 'required|date|after_or_equal:' . now()->subDay()->format('Y-m-d'),
             'end_date'       => 'required|date|after:start_date',
             'budget'         => 'required|numeric|min:1000',
             'currency'       => 'required|in:XOF,EUR,USD',
             'sensitivity'    => 'required|in:faible,moyenne,elevee',
-            'whatsapp_url'   => 'nullable|string|max:500',
+            'whatsapp_url'   => ['nullable', 'url', 'max:500', 'regex:/^https?:\/\//i'],
             'target'              => 'required|array',
             'target.age_min'      => 'required|integer|min:13|max:65',
             'target.age_max'      => 'required|integer|min:13|max:65|gte:target.age_min',
@@ -125,16 +126,23 @@ class BoostController extends Controller
             $query->where('status', $request->status);
         }
 
-        $boosts = $query->latest()->paginate(10);
+        $boosts = $query->latest()->paginate(10)->withQueryString();
 
         return view('boost.my-requests', compact('boosts'));
     }
 
     /**
      * Détail d'un boost
+     * Opérateur : accès à ses propres boosts uniquement.
+     * Validateurs / admin : accès à tous.
      */
     public function show(BoostRequest $boost)
     {
+        $user = auth()->user();
+        if (!$user->hasRole(['validator_n1', 'validator_n2', 'validator', 'admin'])) {
+            abort_if($boost->operator_id !== $user->id, 403, 'Accès non autorisé à ce boost.');
+        }
+
         $boost->load('approvals.user');
         return view('boost.show', compact('boost'));
     }

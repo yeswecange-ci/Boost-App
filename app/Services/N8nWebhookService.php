@@ -15,8 +15,8 @@ class N8nWebhookService
 
     public function __construct()
     {
-        // Priorité : DB → config → défaut
-        $this->mockMode = SettingService::bool('n8n.mock_mode', true);
+        // Priorité : DB → config → défaut false (mock désactivé en production par défaut)
+        $this->mockMode = SettingService::bool('n8n.mock_mode', false);
         $this->timeout  = SettingService::int('n8n.timeout', 10);
     }
 
@@ -160,6 +160,16 @@ class N8nWebhookService
     {
         $page = FacebookPage::where('page_id', $boost->page_id)->first();
 
+        if (!$page) {
+            Log::error('buildCreatePayload : page Facebook introuvable', [
+                'boost_id' => $boost->id,
+                'page_id'  => $boost->page_id,
+            ]);
+            throw new \RuntimeException(
+                "La page Facebook ({$boost->page_id}) associée au boost #{$boost->id} est introuvable. Vérifiez la configuration des pages."
+            );
+        }
+
         return [
             // Identification
             'boost_id'      => $boost->id,
@@ -167,7 +177,7 @@ class N8nWebhookService
             'mode'          => 'CREATE_PAUSED',
 
             // Compte publicitaire Meta (act_XXXXXXXXX) — requis par l'API Meta Ads
-            'ad_account_id' => $page?->ad_account_id,
+            'ad_account_id' => $page->ad_account_id,
 
             // Post Facebook à booster
             'post_id'   => $boost->post_id,
@@ -201,9 +211,9 @@ class N8nWebhookService
             // WhatsApp CTA
             'whatsapp_url' => $boost->whatsapp_url,
 
-            // Opérateur
-            'operator_name'  => $boost->operator->name,
-            'operator_email' => $boost->operator->email,
+            // Opérateur (l'utilisateur peut avoir été supprimé entre-temps)
+            'operator_name'  => $boost->operator?->name ?? 'Opérateur inconnu',
+            'operator_email' => $boost->operator?->email ?? '',
         ];
     }
 

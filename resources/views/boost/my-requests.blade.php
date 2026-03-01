@@ -23,13 +23,15 @@ $statusMap = [
 ];
 $currentStatus = request('status');
 $tabs = [
-    ''         => 'Tous',
-    'draft'    => 'Brouillons',
-    'pending'  => 'En attente',
-    'approved' => 'Approuvés',
-    'active'   => 'Actifs',
-    'rejected' => 'Rejetés',
-    'completed'=> 'Terminés',
+    ''          => 'Tous',
+    'draft'     => 'Brouillons',
+    'pending'   => 'En attente',
+    'approved'  => 'Approuvés',
+    'active'    => 'Actifs',
+    'rejected'  => 'Rejetés',
+    'completed' => 'Terminés',
+    'cancelled' => 'Annulés',
+    'failed'    => 'Échecs',
 ];
 @endphp
 

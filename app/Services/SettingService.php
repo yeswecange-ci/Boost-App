@@ -31,7 +31,11 @@ class SettingService
     {
         $value = static::get($key);
         if ($value === null) return $default;
-        return in_array($value, ['true', '1', 'yes', true, 1], true);
+        // Comparaison insensible à la casse pour les valeurs texte ('True', 'YES', etc.)
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['true', '1', 'yes', 'on'], true);
+        }
+        return in_array($value, [true, 1], true);
     }
 
     /**

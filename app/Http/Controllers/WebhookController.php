@@ -74,7 +74,7 @@ class WebhookController extends Controller
         ]);
 
         // Notifier l'opérateur + les validateurs que la campagne est prête à activer
-        $boost->operator->notify(new BoostCreatedNotification($boost));
+        $boost->operator?->notify(new BoostCreatedNotification($boost));
 
         $validators = User::role(['validator_n1', 'validator_n2', 'validator', 'admin'])->get();
         foreach ($validators as $validator) {
@@ -110,6 +110,18 @@ class WebhookController extends Controller
 
         $boost = BoostRequest::with('operator')->findOrFail($data['boost_id']);
 
+        // Idempotence : seuls les boosts en état transitoire acceptent la mise à jour.
+        // Les statuts finaux (completed, cancelled, failed déjà enregistré) sont ignorés.
+        $allowedStatuses = ['creating', 'paused_ready', 'active', 'paused', 'approved'];
+        if (!in_array($boost->status, $allowedStatuses)) {
+            Log::warning('N8N boost-activated ignoré — statut final déjà atteint', [
+                'boost_id'       => $boost->id,
+                'current_status' => $boost->status,
+                'requested'      => $data['status'],
+            ]);
+            return response()->json(['received' => true, 'ignored' => true, 'reason' => 'status_already_final']);
+        }
+
         $boost->update([
             'status'       => $data['status'],
             'n8n_response' => array_merge($boost->n8n_response ?? [], [
@@ -119,7 +131,7 @@ class WebhookController extends Controller
         ]);
 
         if ($data['status'] === 'active') {
-            $boost->operator->notify(new BoostActivatedNotification($boost));
+            $boost->operator?->notify(new BoostActivatedNotification($boost));
         }
 
         Log::info('N8N callback boost-activated', ['boost_id' => $boost->id, 'status' => $data['status']]);

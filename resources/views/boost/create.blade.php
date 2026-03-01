@@ -26,7 +26,7 @@
 
             <div class="card-body">
                 <span style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.6rem; background:var(--color-primary-light); color:var(--color-primary); border-radius:9999px; font-size:0.75rem; font-weight:600; margin-bottom:0.625rem;">
-                    <i class="fas fa-page4"></i>
+                    <i class="fab fa-facebook"></i>
                     {{ $page->page_name }}
                 </span>
                 <p style="font-size:0.8125rem; color:#475569; margin:0; line-height:1.5;

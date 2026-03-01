@@ -98,7 +98,11 @@
            class="sidebar-item {{ request()->routeIs('boost.pending-n1') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-clock"></i></span>
             File N+1
-            @php $n1Count = \App\Models\BoostRequest::where('status', 'pending_n1')->count(); @endphp
+            @php
+                $n1Count = \Illuminate\Support\Facades\Cache::remember('sidebar_n1_count', 60, fn() =>
+                    \App\Models\BoostRequest::where('status', 'pending_n1')->count()
+                );
+            @endphp
             @if($n1Count > 0)
             <span style="margin-left:auto; background:#ef4444; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
                 {{ $n1Count }}
@@ -112,7 +116,11 @@
            class="sidebar-item {{ request()->routeIs('boost.pending-n2') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-shield-halved"></i></span>
             File N+2
-            @php $n2Count = \App\Models\BoostRequest::where('status', 'pending_n2')->count(); @endphp
+            @php
+                $n2Count = \Illuminate\Support\Facades\Cache::remember('sidebar_n2_count', 60, fn() =>
+                    \App\Models\BoostRequest::where('status', 'pending_n2')->count()
+                );
+            @endphp
             @if($n2Count > 0)
             <span style="margin-left:auto; background:#f59e0b; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
                 {{ $n2Count }}
@@ -183,8 +191,9 @@
 
         {{-- Notifications --}}
         @php
-            $__notifCount  = $__u->unreadNotifications()->count();
-            $__notifItems  = $__notifCount > 0 ? $__u->unreadNotifications()->latest()->limit(10)->get() : collect();
+            // Une seule requête : on charge les 10 dernières non lues, on compte ensuite depuis la collection.
+            $__notifItems  = $__u->unreadNotifications()->latest()->limit(10)->get();
+            $__notifCount  = $__notifItems->count();
         @endphp
         <div x-data="{ open: false }" style="position:relative;">
             <button @click="open = !open" @click.away="open = false"

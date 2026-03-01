@@ -96,8 +96,12 @@ $tabs = [
                     </td>
                     <td>
                         <div style="display:flex; align-items:center; gap:0.5rem;">
+                            @if($boost->operator)
                             <x-user-avatar :user="$boost->operator" :size="28" />
                             <span style="font-size:0.875rem; color:#374151;">{{ $boost->operator->name }}</span>
+                            @else
+                            <span style="font-size:0.875rem; color:#94a3b8; font-style:italic;">(supprimé)</span>
+                            @endif
                         </div>
                     </td>
                     <td>
