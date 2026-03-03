@@ -21,14 +21,26 @@ class MetaPostService
     }
 
     /**
-     * Récupère les posts d'une page Facebook
+     * Récupère les posts d'une page Facebook et les persiste en BD
      */
     public function getPagePosts(string $pageId, int $limit = 12): array
     {
-        if ($this->mockMode) {
-            return $this->getMockPosts($pageId, $limit);
+        $result = $this->mockMode
+            ? $this->getMockPosts($pageId, $limit)
+            : $this->fetchFromApi($pageId, $limit);
+
+        if (empty($result['error']) && !empty($result['data'])) {
+            $this->upsertPostsToDB($pageId, $result['data']);
         }
 
+        return $result;
+    }
+
+    /**
+     * Appel réel à l'API Meta Graph
+     */
+    private function fetchFromApi(string $pageId, int $limit): array
+    {
         try {
             $response = Http::get("{$this->baseUrl}/{$pageId}/posts", [
                 'fields'       => 'id,message,story,created_time,full_picture,permalink_url,attachments,insights.metric(post_impressions)',
@@ -55,6 +67,31 @@ class MetaPostService
         } catch (\Exception $e) {
             Log::error('MetaPostService Exception: ' . $e->getMessage());
             return ['error' => $e->getMessage(), 'data' => []];
+        }
+    }
+
+    /**
+     * Upsert des posts en base de données
+     */
+    private function upsertPostsToDB(string $pageId, array $posts): void
+    {
+        $page = \App\Models\FacebookPage::where('page_id', $pageId)->first();
+        if (!$page) return;
+
+        foreach ($posts as $post) {
+            \App\Models\FacebookPost::updateOrCreate(
+                ['post_id' => $post['id']],
+                [
+                    'facebook_page_id' => $page->id,
+                    'message'          => $post['message'],
+                    'thumbnail_url'    => $post['thumbnail'],
+                    'permalink_url'    => $post['permalink_url'],
+                    'type'             => $post['type'],
+                    'impressions'      => $post['impressions'],
+                    'posted_at'        => $post['created_time'],
+                    'last_synced_at'   => now(),
+                ]
+            );
         }
     }
 

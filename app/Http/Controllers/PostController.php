@@ -29,7 +29,24 @@ class PostController extends Controller
         $posts = ['data' => [], 'error' => null];
 
         if ($selectedPage) {
-            $posts = $this->metaService->getPagePosts($selectedPageId);
+            // Fetch depuis l'API (ou mock) + upsert en BD
+            $this->metaService->getPagePosts($selectedPageId);
+
+            // Lire depuis la BD (données persistées, stables)
+            $dbPosts = \App\Models\FacebookPost::where('facebook_page_id', $selectedPage->id)
+                ->orderByDesc('posted_at')
+                ->get()
+                ->map(fn($p) => [
+                    'id'            => $p->post_id,
+                    'message'       => $p->message,
+                    'created_time'  => $p->posted_at?->toIso8601String(),
+                    'thumbnail'     => $p->thumbnail_url,
+                    'permalink_url' => $p->permalink_url,
+                    'type'          => $p->type,
+                    'impressions'   => $p->impressions,
+                ])->toArray();
+
+            $posts = ['error' => null, 'data' => $dbPosts];
         }
 
         return view('posts.index', compact('pages', 'selectedPage', 'posts'));
