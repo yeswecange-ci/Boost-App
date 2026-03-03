@@ -3,6 +3,8 @@
 @section('page-title', 'Mon profil')
 @section('page-subtitle', 'Gérez vos informations personnelles et vos préférences')
 
+@section('content')
+
 @php
     $user = auth()->user();
 
@@ -311,6 +313,8 @@
     </div>
 
 </div>
+
+@endsection
 
 @push('scripts')
 <script>
