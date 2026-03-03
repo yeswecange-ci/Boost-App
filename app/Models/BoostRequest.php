@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class BoostRequest extends Model
 {
     protected $fillable = [
-        'post_id', 'page_id', 'page_name', 'post_url', 'post_thumbnail',
+        'post_id', 'post_master_id', 'page_id', 'page_name', 'post_url', 'post_thumbnail',
         'post_message', 'start_date', 'end_date', 'budget', 'currency',
         'sensitivity', 'whatsapp_url',
         'target', 'status', 'operator_id', 'validator_id', 'rejection_reason',
@@ -42,6 +43,16 @@ class BoostRequest extends Model
     public function analytics()
     {
         return $this->hasMany(BoostAnalytics::class);
+    }
+
+    public function postMaster()
+    {
+        return $this->belongsTo(FacebookPost::class, 'post_master_id');
+    }
+
+    public function boostRun(): HasOne
+    {
+        return $this->hasOne(BoostRun::class, 'boost_request_id');
     }
 
     // Helpers de statut

@@ -54,7 +54,8 @@
 <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:1.25rem;">
 
     @forelse($posts['data'] as $post)
-    <div class="card" style="display:flex; flex-direction:column; overflow:hidden; transition:box-shadow 0.2s;"
+    @php $boostable = $post['is_boostable'] ?? true; @endphp
+    <div class="card" style="display:flex; flex-direction:column; overflow:hidden; transition:box-shadow 0.2s; {{ !$boostable ? 'opacity:0.78;' : '' }}"
          onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'"
          onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)'">
 
@@ -70,7 +71,7 @@
             </div>
             @endif
 
-            {{-- Type badge --}}
+            {{-- Badge type --}}
             <span style="
                 position:absolute; top:0.75rem; right:0.75rem;
                 padding:0.25rem 0.625rem;
@@ -90,7 +91,31 @@
                 @endif
                 {{ ucfirst($post['type']) }}
             </span>
+
+            {{-- Badge boostabilité (PDF Architecture — règle stricte) --}}
+            <span style="
+                position:absolute; top:0.75rem; left:0.75rem;
+                padding:0.25rem 0.625rem;
+                border-radius:9999px;
+                font-size:0.6875rem; font-weight:700;
+                {{ $boostable
+                    ? 'background:#dcfce7; color:#15803d;'
+                    : 'background:#fee2e2; color:#b91c1c;' }}
+            " title="{{ $post['boost_reason'] ?? '' }}">
+                <i class="fas fa-{{ $boostable ? 'check-circle' : 'ban' }}" style="margin-right:0.25rem;"></i>
+                {{ $boostable ? 'Boostable' : 'Non boostable' }}
+            </span>
         </div>
+
+        {{-- Alerte si post non boostable --}}
+        @if(!$boostable)
+        <div style="padding:0.5rem 1rem; background:#fef2f2; border-bottom:1px solid #fecaca;">
+            <p style="margin:0; font-size:0.75rem; color:#b91c1c;">
+                <i class="fas fa-exclamation-triangle" style="margin-right:0.25rem;"></i>
+                {{ $post['boost_reason'] ?? 'Post non boostable' }}
+            </p>
+        </div>
+        @endif
 
         {{-- Body --}}
         <div style="padding:1rem; flex:1; display:flex; flex-direction:column;">
@@ -122,12 +147,21 @@
 
         {{-- Footer / Actions --}}
         <div style="padding:0.75rem 1rem; border-top:1px solid #f1f5f9; display:flex; flex-direction:column; gap:0.5rem;">
+            @if($boostable)
             <a href="{{ route('boost.create', ['post_id' => $post['id'], 'page_id' => $selectedPage->page_id]) }}"
                class="btn-primary"
                style="width:100%; justify-content:center;">
                 <i class="fas fa-rocket"></i>
                 Booster ce post
             </a>
+            @else
+            <button disabled
+                    title="{{ $post['boost_reason'] ?? 'Post non boostable' }}"
+                    style="width:100%; justify-content:center; padding:0.5rem 1rem; border-radius:0.5rem; border:none; background:#f1f5f9; color:#94a3b8; cursor:not-allowed; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+                <i class="fas fa-ban"></i>
+                Non boostable
+            </button>
+            @endif
             <a href="{{ $post['permalink_url'] }}"
                target="_blank"
                class="btn-secondary"

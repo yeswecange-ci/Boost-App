@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\BoostRequest;
+use App\Models\FacebookPost;
+use App\Models\SyncRun;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -36,13 +38,28 @@ class HomeController extends Controller
             ->take(5)
             ->get();
 
+        // Stats de synchronisation (visibles pour les validateurs / admin)
+        $lastSyncRun = $isValidator
+            ? SyncRun::orderByDesc('started_at')->first()
+            : null;
+
+        $nonBoostableCount = $isValidator
+            ? FacebookPost::where(function ($q) {
+                $q->where('fb_status', '!=', 'FB_OK')
+                  ->orWhere('business_status', '!=', 'ACTIVE')
+                  ->orWhere('is_boostable', 0);
+              })->count()
+            : 0;
+
         return view('home', compact(
             'isValidator',
             'totalBoosts',
             'pendingCount',
             'activeCount',
             'budgetByCurrency',
-            'recentBoosts'
+            'recentBoosts',
+            'lastSyncRun',
+            'nonBoostableCount'
         ));
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\BoostController;
 use App\Http\Controllers\ValidatorController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SyncRunController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -53,6 +54,12 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{user}',          [UserController::class, 'update'])->name('update');
         Route::delete('/{user}',       [UserController::class, 'destroy'])->name('destroy');
         Route::post('/{user}/toggle',  [UserController::class, 'toggleActive'])->name('toggle');
+    });
+
+    // ─── Sync Runs (admin + validators) — monitoring ─────────
+    Route::middleware(['role:validator_n1,validator_n2,validator,admin'])->prefix('sync-runs')->name('sync-runs.')->group(function () {
+        Route::get('/',        [SyncRunController::class, 'index'])->name('index');
+        Route::get('/{syncRun}', [SyncRunController::class, 'show'])->name('show');
     });
 
     // ─── Settings (admin only) ───────────────────────────────

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BoostRequest;
 use App\Models\FacebookPage;
+use App\Models\FacebookPost;
 use App\Services\MetaPostService;
 use Illuminate\Http\Request;
 use App\Notifications\BoostSubmittedNotification;
@@ -65,8 +66,18 @@ class BoostController extends Controller
         $page   = FacebookPage::where('page_id', $validated['page_id'])->firstOrFail();
         $action = $request->input('action', 'draft');
 
+        // Vérification de boostabilité (PDF Architecture — règle stricte)
+        // Un post non boostable ne peut pas être soumis (brouillon OK, soumission bloquée)
+        $postMaster = FacebookPost::where('post_id', $validated['post_id'])->first();
+        if ($action === 'submit' && $postMaster && !$postMaster->isBoostable()) {
+            return back()
+                ->withInput()
+                ->with('error', 'Ce post ne peut pas être boosté : ' . $postMaster->boostability_reason);
+        }
+
         $boost = BoostRequest::create([
             'post_id'        => $validated['post_id'],
+            'post_master_id' => $postMaster?->id,
             'page_id'        => $validated['page_id'],
             'page_name'      => $page->page_name,
             'post_url'       => $validated['post_url'],
@@ -102,6 +113,13 @@ class BoostController extends Controller
     {
         abort_if($boost->operator_id !== auth()->id(), 403);
         abort_if(!in_array($boost->status, ['draft', 'rejected_n1', 'rejected_n2']), 422, 'Ce boost ne peut pas être soumis.');
+
+        // Vérification de boostabilité au moment de la soumission
+        $postMaster = FacebookPost::where('post_id', $boost->post_id)->first();
+        if ($postMaster && !$postMaster->isBoostable()) {
+            return redirect()->route('boost.show', $boost->id)
+                ->with('error', 'Ce post ne peut plus être boosté : ' . $postMaster->boostability_reason);
+        }
 
         $boost->update(['status' => 'pending_n1']);
         $this->notifyN1Validators($boost);

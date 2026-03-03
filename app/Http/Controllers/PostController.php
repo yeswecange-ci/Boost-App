@@ -37,13 +37,17 @@ class PostController extends Controller
                 ->orderByDesc('posted_at')
                 ->get()
                 ->map(fn($p) => [
-                    'id'            => $p->post_id,
-                    'message'       => $p->message,
-                    'created_time'  => $p->posted_at?->toIso8601String(),
-                    'thumbnail'     => $p->thumbnail_url,
-                    'permalink_url' => $p->permalink_url,
-                    'type'          => $p->type,
-                    'impressions'   => $p->impressions,
+                    'id'              => $p->post_id,
+                    'message'         => $p->message,
+                    'created_time'    => $p->posted_at?->toIso8601String(),
+                    'thumbnail'       => $p->thumbnail_url,
+                    'permalink_url'   => $p->permalink_url,
+                    'type'            => $p->type,
+                    'impressions'     => $p->impressions,
+                    'is_boostable'    => $p->isBoostable(),
+                    'fb_status'       => $p->fb_status ?? 'FB_OK',
+                    'business_status' => $p->business_status ?? 'ACTIVE',
+                    'boost_reason'    => $p->boostability_reason,
                 ])->toArray();
 
             $posts = ['error' => null, 'data' => $dbPosts];

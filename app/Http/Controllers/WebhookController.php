@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdsEntity;
 use App\Models\BoostRequest;
+use App\Models\BoostRun;
 use App\Models\User;
 use App\Notifications\BoostCreatedNotification;
 use App\Notifications\BoostActivatedNotification;
@@ -66,12 +68,33 @@ class WebhookController extends Controller
             'meta_adset_id'    => $data['meta_adset_id'],
             'meta_ad_id'       => $data['meta_ad_id'],
             'n8n_response'     => array_merge($boost->n8n_response ?? [], [
-                'created_at'   => now()->toIso8601String(),
-                'campaign_id'  => $data['meta_campaign_id'],
-                'adset_id'     => $data['meta_adset_id'],
-                'ad_id'        => $data['meta_ad_id'],
+                'created_at'  => now()->toIso8601String(),
+                'campaign_id' => $data['meta_campaign_id'],
+                'adset_id'    => $data['meta_adset_id'],
+                'ad_id'       => $data['meta_ad_id'],
             ]),
         ]);
+
+        // Créer / mettre à jour l'AdsEntity pour traçabilité (idempotence)
+        $boostRun = BoostRun::where('boost_request_id', $boost->id)->latest()->first();
+        if ($boostRun) {
+            AdsEntity::updateOrCreate(
+                ['boost_run_id' => $boostRun->id],
+                [
+                    'campaign_id'     => $data['meta_campaign_id'],
+                    'adset_id'        => $data['meta_adset_id'],
+                    'ad_id'           => $data['meta_ad_id'],
+                    'campaign_status' => 'PAUSED',
+                    'adset_status'    => 'PAUSED',
+                    'ad_status'       => 'PAUSED',
+                    'payload'         => [
+                        'received_at'    => now()->toIso8601String(),
+                        'object_story_id'=> $boost->page_id . '_' . $boost->post_id,
+                    ],
+                ]
+            );
+            $boostRun->update(['status' => 'PAUSED']);
+        }
 
         // Notifier l'opérateur + les validateurs que la campagne est prête à activer
         $boost->operator?->notify(new BoostCreatedNotification($boost));
