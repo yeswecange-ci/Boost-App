@@ -5,14 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\BoostRequest;
 use App\Models\FacebookPage;
 use App\Models\FacebookPost;
-use App\Services\MetaPostService;
 use Illuminate\Http\Request;
 use App\Notifications\BoostSubmittedNotification;
 use App\Models\User;
 
 class BoostController extends Controller
 {
-    public function __construct(private MetaPostService $metaService) {}
+    public function __construct() {}
 
     /**
      * Formulaire de création
@@ -23,12 +22,22 @@ class BoostController extends Controller
         $postId  = $request->get('post_id');
         $page    = FacebookPage::where('page_id', $pageId)->firstOrFail();
 
-        $posts  = $this->metaService->getPagePosts($pageId, 25);
-        $post   = collect($posts['data'])->firstWhere('id', $postId);
+        $postMaster = FacebookPost::where('post_id', $postId)
+            ->where('facebook_page_id', $page->id)
+            ->first();
 
-        if (!$post) {
+        if (!$postMaster) {
             return redirect()->route('posts.index')->with('error', 'Post introuvable.');
         }
+
+        $post = [
+            'id'            => $postMaster->post_id,
+            'message'       => $postMaster->message,
+            'created_time'  => $postMaster->posted_at?->toIso8601String(),
+            'thumbnail'     => $postMaster->thumbnail_url,
+            'permalink_url' => $postMaster->permalink_url,
+            'type'          => $postMaster->type,
+        ];
 
         $currencies = ['XOF', 'EUR', 'USD'];
         $countries  = $this->getAfricanCountries();

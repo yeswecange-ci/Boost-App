@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\FacebookPage;
-use App\Services\MetaPostService;
 use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
-    public function __construct(private MetaPostService $metaService) {}
+    public function __construct() {}
 
     public function index(Request $request)
     {
@@ -29,10 +28,7 @@ class PostController extends Controller
         $posts = ['data' => [], 'error' => null];
 
         if ($selectedPage) {
-            // Fetch depuis l'API (ou mock) + upsert en BD
-            $this->metaService->getPagePosts($selectedPageId);
-
-            // Lire depuis la BD (données persistées, stables)
+            // Lire directement depuis la BD (sync faite par N8N uniquement)
             $dbPosts = \App\Models\FacebookPost::where('facebook_page_id', $selectedPage->id)
                 ->orderByDesc('posted_at')
                 ->get()
