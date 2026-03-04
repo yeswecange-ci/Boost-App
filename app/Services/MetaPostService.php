@@ -52,7 +52,7 @@ class MetaPostService
             $syncRun->finish();
             return $result;
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $syncRun->fail($e->getMessage());
             Log::error('MetaPostService::getPagePosts exception', [
                 'page_id' => $pageId,
