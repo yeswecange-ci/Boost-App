@@ -1,0 +1,514 @@
+{
+  "name": "MVP - Boost Post Facebook (Meta Ads API) - PAUSED (n8n 2.0.3) caleb",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "9cb35271-fcd3-43a2-8077-4d40e1aac752",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tok",
+              "name": "meta_ads_token",
+              "value": "XXXXXXXXXXXX",
+              "type": "string"
+            },
+            {
+              "id": "acc",
+              "name": "ad_account_id",
+              "value": "act_18238",
+              "type": "string"
+            },
+            {
+              "id": "post",
+              "name": "post_id",
+              "value": "668925849823227_14",
+              "type": "string"
+            },
+            {
+              "id": "cname",
+              "name": "campaign_name",
+              "value": "BOOST POST MVP - {{$now}}",
+              "type": "string"
+            },
+            {
+              "id": "asname",
+              "name": "adset_name",
+              "value": "AdSet CI - Marketing & Communication - 1 day",
+              "type": "string"
+            },
+            {
+              "id": "adname",
+              "name": "ad_name",
+              "value": "Ad - Boost Existing Post",
+              "type": "string"
+            },
+            {
+              "id": "budget",
+              "name": "daily_budget_cents",
+              "value": "700",
+              "type": "string"
+            },
+            {
+              "id": "objective",
+              "name": "campaign_objective",
+              "value": "OUTCOME_TRAFFIC",
+              "type": "string"
+            },
+            {
+              "id": "dfb7b0cf-3603-45e0-bc2c-0354cd317211",
+              "name": "existing_campaign",
+              "value": "120241034883010205",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e285e845-f58b-49b2-bc6f-9a3835852729",
+      "name": "Set Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -16,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tgt",
+              "name": "targeting_json",
+              "value": "={{ JSON.stringify({\n  geo_locations: {\n    countries: ['CI']\n  },\n  interests: [\n    { id: '6003279598823' },   // Marketing\n    { id: '6003127206524' },   // Digital marketing\n    { id: '6003389760112' }    // Social media marketing\n  ]\n}) }}\n",
+              "type": "string"
+            },
+            {
+              "id": "crea",
+              "name": "creative_json",
+              "value": "={{ JSON.stringify({ object_story_id: $json.post_id }) }}",
+              "type": "string"
+            },
+            {
+              "id": "start",
+              "name": "start_time",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "end",
+              "name": "end_time",
+              "value": "={{ $now.plus({ days: 7 }).toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "59263da7-49f5-48d5-8b0c-89aa9d9ced82",
+      "name": "Build Payload Strings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        224,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Set Variables').item.json.ad_account_id }}/campaigns",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $('Set Variables').item.json.campaign_name }}"
+            },
+            {
+              "name": "objective",
+              "value": "={{ $('Set Variables').item.json.campaign_objective }}"
+            },
+            {
+              "name": "status",
+              "value": "PAUSED"
+            },
+            {
+              "name": "special_ad_categories",
+              "value": "[]"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Set Variables').item.json.meta_ads_token }}"
+            },
+            {
+              "name": "is_adset_budget_sharing_enabled",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "response": {}
+        }
+      },
+      "id": "1413fc01-6375-4464-82d0-f5f5a38c03a7",
+      "name": "HTTP - Create Campaign (PAUSED)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        528,
+        752
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "camp-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2299bda-42fd-4476-b4a8-c90c3dead741",
+      "name": "IF - Campaign OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        736,
+        592
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Set Variables').item.json.ad_account_id }}/adsets",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $('Set Variables').item.json.adset_name }}"
+            },
+            {
+              "name": "campaign_id",
+              "value": "={{ $('Set Variables').item.json.existing_campaign }}"
+            },
+            {
+              "name": "lifetime_budget",
+              "value": "={{ $('Set Variables').item.json.daily_budget_cents }}"
+            },
+            {
+              "name": "billing_event",
+              "value": "IMPRESSIONS"
+            },
+            {
+              "name": "optimization_goal",
+              "value": "LINK_CLICKS"
+            },
+            {
+              "name": "bid_strategy",
+              "value": "LOWEST_COST_WITHOUT_CAP"
+            },
+            {
+              "name": "status",
+              "value": "PAUSED"
+            },
+            {
+              "name": "targeting",
+              "value": "={{ $('Build Payload Strings').item.json.targeting_json }}"
+            },
+            {
+              "name": "start_time",
+              "value": "={{ $('Build Payload Strings').item.json.start_time }}"
+            },
+            {
+              "name": "end_time",
+              "value": "={{ $('Build Payload Strings').item.json.end_time }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Set Variables').item.json.meta_ads_token }}"
+            },
+            {
+              "name": "is_adset_budget_sharing_enabled",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "response": {}
+        }
+      },
+      "id": "d50d55f1-639f-4085-9d98-3ee12cf51ead",
+      "name": "HTTP - Create Ad Set (PAUSED)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        992,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "adset-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8158e217-c846-456b-a2fd-fce982b06354",
+      "name": "IF - Ad Set OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{$json.ad_account_id}}/ads",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.ad_name }}"
+            },
+            {
+              "name": "adset_id",
+              "value": "={{ $node['HTTP - Create Ad Set (PAUSED)'].json.id }}"
+            },
+            {
+              "name": "status",
+              "value": "PAUSED"
+            },
+            {
+              "name": "creative",
+              "value": "={{ $json.creative_json }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.meta_ads_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {}
+        }
+      },
+      "id": "f1664a86-3982-4a1e-8a97-601c8020ae18",
+      "name": "HTTP - Create Ad (PAUSED, Boost Post)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "step",
+              "name": "error_step",
+              "value": "Campaign",
+              "type": "string"
+            },
+            {
+              "id": "payload",
+              "name": "error_payload",
+              "value": "={{ JSON.stringify($node['HTTP - Create Campaign (PAUSED)'].json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "78a6cd7f-c1e6-43f0-80bb-22b605152863",
+      "name": "ERROR - Campaign",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        992,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "step2",
+              "name": "error_step",
+              "value": "Ad Set",
+              "type": "string"
+            },
+            {
+              "id": "payload2",
+              "name": "error_payload",
+              "value": "={{ JSON.stringify($node['HTTP - Create Ad Set (PAUSED)'].json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eb277b75-b5a0-4f78-9716-7c258e1592a0",
+      "name": "ERROR - Ad Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        1472,
+        704
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Variables": {
+      "main": [
+        [
+          {
+            "node": "Build Payload Strings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Payload Strings": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Create Ad Set (PAUSED)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Create Campaign (PAUSED)": {
+      "main": [
+        [
+          {
+            "node": "IF - Campaign OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Campaign OK?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "ERROR - Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Create Ad Set (PAUSED)": {
+      "main": [
+        [
+          {
+            "node": "IF - Ad Set OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Ad Set OK?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Create Ad (PAUSED, Boost Post)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR - Ad Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "86cea8b0-cbd3-4c37-963c-03614b4d5e66",
+  "meta": {
+    "instanceId": "314670d062bb25ab716a72c9476deb9d39922c28eaea2d899d7d0117a4f4eab7"
+  },
+  "id": "ZFCXPqO5ff2QbbVy",
+  "tags": []
+}

@@ -74,7 +74,7 @@
         <a href="{{ route('campaigns.index') }}"
            class="sidebar-item {{ request()->routeIs('campaigns.*') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-layer-group"></i></span>
-            Campagnes Media Buyer
+            Campagnes Media
         </a>
 
         @if(auth()->user()->hasRole(['admin']))

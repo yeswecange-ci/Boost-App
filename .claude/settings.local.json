@@ -9,7 +9,14 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(rm:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(del:*)",
+      "Bash(mkdir:*)",
+      "Bash(/c/wamp64/bin/mysql/mysql8.4.7/bin/mysql.exe:*)",
+      "Bash(sed:*)"
     ]
   }
 }
