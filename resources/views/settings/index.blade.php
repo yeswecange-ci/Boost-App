@@ -436,6 +436,8 @@ $isMockMeta = ($meta['meta.mock_mode'] ?? 'true') === 'true';
                  'body'  => '{ "boost_id": 1, "meta_campaign_id": "...", "meta_adset_id": "...", "meta_ad_id": "..." }'],
                 ['label' => 'Campagne activée/pausée (statut → active|paused)', 'method' => 'POST', 'url' => route('webhook.n8n.boost-activated'),
                  'body'  => '{ "boost_id": 1, "status": "active" }'],
+                ['label' => 'Media Buyer — campagne terminée (statut → done|error)', 'method' => 'POST', 'url' => route('webhook.n8n.campaign-done'),
+                 'body'  => '{ "campaign_db_id": 42, "execution_status": "done", "meta_campaign_id": "...", "meta_adset_id": "...", "meta_ad_id": "..." }'],
             ] as $ep)
             <div style="background:#f8fafc; border:1px solid var(--color-border); border-radius:0.625rem; padding:0.875rem 1rem;">
                 <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">

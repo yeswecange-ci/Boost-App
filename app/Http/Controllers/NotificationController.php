@@ -11,7 +11,17 @@ class NotificationController extends Controller
         $notification = auth()->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        return redirect()->route('boost.show', $notification->data['boost_id']);
+        $data = $notification->data;
+
+        if (!empty($data['campaign_id'])) {
+            return redirect()->route('campaigns.show', $data['campaign_id']);
+        }
+
+        if (!empty($data['boost_id'])) {
+            return redirect()->route('boost.show', $data['boost_id']);
+        }
+
+        return redirect()->route('home');
     }
 
     public function markAllRead()

@@ -36,12 +36,13 @@ class SettingsController extends Controller
         ]);
 
         SettingService::setMany([
-            'n8n.mock_mode'        => $request->boolean('n8n_mock_mode') ? 'true' : 'false',
-            'n8n.webhook_create'   => $request->input('n8n_webhook_create'),
-            'n8n.webhook_activate' => $request->input('n8n_webhook_activate'),
-            'n8n.webhook_pause'    => $request->input('n8n_webhook_pause'),
-            'n8n.secret'           => $request->input('n8n_secret'),
-            'n8n.timeout'          => $request->input('n8n_timeout', 10),
+            'n8n.mock_mode'          => $request->boolean('n8n_mock_mode') ? 'true' : 'false',
+            'n8n.webhook_create'     => $request->input('n8n_webhook_create'),
+            'n8n.webhook_activate'   => $request->input('n8n_webhook_activate'),
+            'n8n.webhook_pause'      => $request->input('n8n_webhook_pause'),
+            'n8n.webhook_campaign'   => $request->input('n8n_webhook_campaign'),
+            'n8n.secret'             => $request->input('n8n_secret'),
+            'n8n.timeout'            => $request->input('n8n_timeout', 10),
         ]);
 
         return redirect()->route('settings.index')
@@ -185,12 +186,13 @@ class SettingsController extends Controller
         // Fallback sur config pour les clés non encore sauvegardées en DB
         $defaults = [
             'n8n' => [
-                'n8n.mock_mode'        => 'true',
-                'n8n.webhook_create'   => config('services.n8n.webhook_create'),
-                'n8n.webhook_activate' => config('services.n8n.webhook_activate'),
-                'n8n.webhook_pause'    => config('services.n8n.webhook_pause'),
-                'n8n.secret'           => config('services.n8n.secret'),
-                'n8n.timeout'          => '10',
+                'n8n.mock_mode'          => 'true',
+                'n8n.webhook_create'     => config('services.n8n.webhook_create'),
+                'n8n.webhook_activate'   => config('services.n8n.webhook_activate'),
+                'n8n.webhook_pause'      => config('services.n8n.webhook_pause'),
+                'n8n.webhook_campaign'   => config('services.n8n.webhook_campaign'),
+                'n8n.secret'             => config('services.n8n.secret'),
+                'n8n.timeout'            => '10',
             ],
             'meta' => [
                 'meta.mock_mode'    => 'true',
