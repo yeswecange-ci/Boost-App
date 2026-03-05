@@ -53,7 +53,7 @@
                     <div>
                         <label class="form-label">
                             Objectif <span style="color:#ef4444;">*</span>
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: objective</span>
+
                         </label>
                         <select name="campaign_objective" class="form-control" id="sel_objective" onchange="updateSummary()">
                             @foreach([
@@ -74,7 +74,7 @@
                     <div>
                         <label class="form-label">
                             Catégorie spéciale
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: special_ad_categories</span>
+
                         </label>
                         <select name="special_ad_categories" class="form-control">
                             @foreach([
@@ -94,7 +94,7 @@
                     <div>
                         <label class="form-label">
                             Statut initial
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: status</span>
+
                         </label>
                         <select name="campaign_status" class="form-control" id="sel_status" onchange="updateSummary()">
                             <option value="PAUSED" {{ old('campaign_status','PAUSED') === 'PAUSED' ? 'selected' : '' }}>PAUSED — En pause (recommandé)</option>
@@ -158,7 +158,7 @@
                     <div>
                         <label class="form-label">
                             Type de budget
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: lifetime_budget / daily_budget</span>
+
                         </label>
                         <select name="budget_type" class="form-control" id="sel_budget_type" onchange="updateBudgetHint()">
                             <option value="lifetime_budget" {{ old('budget_type','lifetime_budget') === 'lifetime_budget' ? 'selected' : '' }}>lifetime_budget — Budget total sur la période</option>
@@ -171,7 +171,7 @@
                     <div>
                         <label class="form-label">
                             Durée de diffusion
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: end_time</span>
+
                         </label>
                         <select name="duration_days" class="form-control" id="sel_duration" onchange="updateSummary()">
                             @foreach([1=>'1 jour',3=>'3 jours',7=>'7 jours (défaut)',14=>'14 jours',30=>'30 jours'] as $d => $lbl)
@@ -185,7 +185,7 @@
                     <div style="grid-column:1/-1;">
                         <label class="form-label">
                             Budget (FCFA)
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: budget en centimes × 100</span>
+
                         </label>
                         <input type="hidden" name="budget_value" id="budget_value" value="{{ old('budget_value',7000) }}">
                         <div style="display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.75rem;" id="budgetPills">
@@ -213,7 +213,7 @@
                     <div style="grid-column:1/-1;">
                         <label class="form-label">
                             Pays cibles
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: geo_locations.countries</span>
+
                         </label>
                         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem;" id="countriesGrid">
                             @foreach([
@@ -241,7 +241,7 @@
                     <div style="grid-column:1/-1;">
                         <label class="form-label">
                             Centres d'intérêt
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: targeting.interests</span>
+
                         </label>
                         @php
                             $defaultInterestIds = ['6003279598823','6003127206524','6003389760112'];
@@ -276,7 +276,7 @@
                     <div>
                         <label class="form-label">
                             Optimization Goal
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: optimization_goal</span>
+
                         </label>
                         <select name="optimization_goal" class="form-control">
                             @foreach([
@@ -297,7 +297,7 @@
                     <div>
                         <label class="form-label">
                             Billing Event
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: billing_event</span>
+
                         </label>
                         <select name="billing_event" class="form-control">
                             @foreach([
@@ -315,7 +315,7 @@
                     <div style="grid-column:1/-1;">
                         <label class="form-label">
                             Stratégie d'enchères
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: bid_strategy</span>
+
                         </label>
                         <select name="bid_strategy" class="form-control">
                             @foreach([
@@ -362,7 +362,7 @@
                     <div style="grid-column:1/-1;">
                         <label class="form-label">
                             Post Facebook à booster <span style="color:#ef4444;">*</span>
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: object_story_id</span>
+
                         </label>
 
                         @if($post)
@@ -405,7 +405,7 @@
                     <div>
                         <label class="form-label">
                             Statut de l'Ad
-                            <span style="font-size:.7rem; background:#eef2ff; color:var(--color-primary); padding:1px 5px; border-radius:3px; margin-left:4px;">API: status</span>
+
                         </label>
                         <select name="ad_status" class="form-control">
                             <option value="PAUSED" {{ old('ad_status','PAUSED') === 'PAUSED' ? 'selected' : '' }}>PAUSED — En pause (recommandé)</option>
