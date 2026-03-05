@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Approval;
+use App\Models\BoostCampaign;
 use App\Models\BoostRequest;
 use App\Models\User;
 use App\Notifications\BoostApprovedNotification;
@@ -51,23 +52,23 @@ class ValidatorController extends Controller
     }
 
     /**
-     * Historique complet
+     * Historique complet des campagnes Media Buyer
      */
     public function all(Request $request)
     {
-        $query = BoostRequest::with('operator');
+        $query = BoostCampaign::with('user');
 
-        if ($request->status === 'rejected') {
-            $query->whereIn('status', ['rejected_n1', 'rejected_n2']);
-        } elseif ($request->status === 'pending') {
-            $query->whereIn('status', ['pending_n1', 'pending_n2']);
+        if ($request->status === 'pending') {
+            $query->whereIn('execution_status', ['pending_n1', 'pending_n2']);
+        } elseif ($request->status === 'error') {
+            $query->whereIn('execution_status', ['error', 'rejected']);
         } elseif ($request->status) {
-            $query->where('status', $request->status);
+            $query->where('execution_status', $request->status);
         }
 
-        $boosts = $query->latest()->paginate(15)->withQueryString();
+        $campaigns = $query->latest()->paginate(15)->withQueryString();
 
-        return view('boost.all', compact('boosts'));
+        return view('boost.all', compact('campaigns'));
     }
 
     // ─────────────────────────────────────────────────────────

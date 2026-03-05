@@ -128,6 +128,11 @@ class CampaignController extends Controller
     // ── Soumettre pour validation N+1 (draft/rejected → pending_n1) ─
     public function submit(BoostCampaign $campaign)
     {
+        // Seul le propriétaire peut soumettre (sauf admin)
+        if (!auth()->user()->hasRole('admin') && $campaign->user_id !== auth()->id()) {
+            abort(403, 'Vous ne pouvez pas soumettre une campagne qui ne vous appartient pas.');
+        }
+
         if (!in_array($campaign->execution_status, ['draft', 'rejected'])) {
             return back()->with('error', 'Seules les campagnes en brouillon ou rejetées peuvent être soumises.');
         }
@@ -149,6 +154,9 @@ class CampaignController extends Controller
         if ($campaign->execution_status === 'pending_n1') {
             if (!$user->hasRole(['validator_n1', 'validator', 'admin'])) {
                 return back()->with('error', 'Vous n\'avez pas le rôle N+1 requis.');
+            }
+            if ($campaign->user_id === $user->id && !$user->hasRole('admin')) {
+                return back()->with('error', 'Vous ne pouvez pas valider votre propre campagne.');
             }
             $campaign->update(['execution_status' => 'pending_n2', 'error_message' => null]);
             return redirect()->route('campaigns.show', $campaign->id)

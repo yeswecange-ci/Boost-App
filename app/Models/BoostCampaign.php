@@ -39,10 +39,19 @@ class BoostCampaign extends Model
         'launched_at' => 'datetime',
     ];
 
+    // ── Relations ──────────────────────────────────────────
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
+    public function post()
+    {
+        return $this->belongsTo(FacebookPost::class, 'post_id', 'post_id');
+    }
+
+    // ── Accesseurs ─────────────────────────────────────────
 
     public function getStatusLabelAttribute(): string
     {

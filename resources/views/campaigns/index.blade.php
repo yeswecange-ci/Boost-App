@@ -33,17 +33,11 @@
             <i class="fas fa-layer-group" style="color:var(--color-primary);"></i>
             Campagnes Meta Ads
         </div>
-        @can('create', App\Models\BoostCampaign::class)
-        <a href="{{ route('campaigns.create') }}" class="btn-primary btn-sm">
-            <i class="fas fa-plus"></i> Nouvelle campagne
-        </a>
-        @else
         @if(auth()->user()->hasRole(['operator','admin']))
         <a href="{{ route('campaigns.create') }}" class="btn-primary btn-sm">
             <i class="fas fa-plus"></i> Nouvelle campagne
         </a>
         @endif
-        @endcan
     </div>
 
     @if($campaigns->isEmpty())

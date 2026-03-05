@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\BoostCampaign;
-use App\Models\BoostRequest;
 use App\Models\FacebookPost;
 use App\Models\SyncRun;
 use Illuminate\Http\Request;
@@ -17,29 +16,27 @@ class HomeController extends Controller
 
     public function index()
     {
-        $user      = auth()->user();
+        $user        = auth()->user();
         $isValidator = $user->hasRole(['validator_n1', 'validator_n2', 'validator', 'admin']);
+        $isN1        = $user->hasRole(['validator_n1', 'validator', 'admin']);
+        $isN2        = $user->hasRole(['validator_n2', 'admin']);
 
-        $baseQuery = fn() => BoostRequest::when(!$isValidator, fn($q) => $q->where('operator_id', $user->id));
+        // Stats campagnes — filtrées par rôle (opérateurs voient les leurs, validateurs voient tout)
+        $campBase = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id));
 
-        $totalBoosts  = $baseQuery()->count();
-        $pendingCount = $baseQuery()->whereIn('status', ['pending_n1', 'pending_n2'])->count();
-        $activeCount  = $baseQuery()->where('status', 'active')->count();
+        $campaignCounts = [
+            'total'      => $campBase()->count(),
+            'draft'      => $campBase()->where('execution_status', 'draft')->count(),
+            'pending_n1' => $campBase()->where('execution_status', 'pending_n1')->count(),
+            'pending_n2' => $campBase()->where('execution_status', 'pending_n2')->count(),
+            'approved'   => $campBase()->where('execution_status', 'approved')->count(),
+            'done'       => $campBase()->where('execution_status', 'done')->count(),
+            'error'      => $campBase()->whereIn('execution_status', ['error', 'rejected'])->count(),
+        ];
 
-        // Budget regroupé par devise pour éviter de mélanger XOF/EUR/USD
-        $budgetByCurrency = $baseQuery()
-            ->whereIn('status', ['approved', 'paused_ready', 'active', 'completed'])
-            ->selectRaw('currency, SUM(budget) as total')
-            ->groupBy('currency')
-            ->pluck('total', 'currency');
+        $recentCampaigns = $campBase()->with('user')->latest()->take(5)->get();
 
-        $recentBoosts = $baseQuery()
-            ->with('operator')
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // Stats de synchronisation (visibles pour les validateurs / admin)
+        // Monitoring sync (validateurs / admin uniquement)
         $lastSyncRun = $isValidator
             ? SyncRun::orderByDesc('started_at')->first()
             : null;
@@ -52,30 +49,12 @@ class HomeController extends Controller
               })->count()
             : 0;
 
-        // Stats Campagnes Media Buyer (filtrées par rôle)
-        $isN1 = $user->hasRole(['validator_n1', 'validator', 'admin']);
-        $isN2 = $user->hasRole(['validator_n2', 'admin']);
-        $campBase = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id));
-        $campaignCounts = [
-            'total'      => $campBase()->count(),
-            'draft'      => $campBase()->where('execution_status', 'draft')->count(),
-            'pending_n1' => $campBase()->where('execution_status', 'pending_n1')->count(),
-            'pending_n2' => $campBase()->where('execution_status', 'pending_n2')->count(),
-            'approved'   => $campBase()->where('execution_status', 'approved')->count(),
-            'done'       => $campBase()->where('execution_status', 'done')->count(),
-            'error'      => $campBase()->whereIn('execution_status', ['error', 'rejected'])->count(),
-        ];
-
         return view('home', compact(
             'isValidator', 'isN1', 'isN2',
-            'totalBoosts',
-            'pendingCount',
-            'activeCount',
-            'budgetByCurrency',
-            'recentBoosts',
+            'campaignCounts',
+            'recentCampaigns',
             'lastSyncRun',
-            'nonBoostableCount',
-            'campaignCounts'
+            'nonBoostableCount'
         ));
     }
 }

@@ -119,15 +119,11 @@
         @endif
 
         @if(auth()->user()->hasRole(['validator_n1', 'validator', 'admin']))
-        <a href="{{ route('boost.pending-n1') }}"
-           class="sidebar-item {{ request()->routeIs('boost.pending-n1') ? 'active' : '' }}">
+        @php $n1Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n1')->count(); @endphp
+        <a href="{{ route('campaigns.pending') }}"
+           class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-clock"></i></span>
             File N+1
-            @php
-                $n1Count = \Illuminate\Support\Facades\Cache::remember('sidebar_n1_count', 60, fn() =>
-                    \App\Models\BoostRequest::where('status', 'pending_n1')->count()
-                );
-            @endphp
             @if($n1Count > 0)
             <span style="margin-left:auto; background:#ef4444; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
                 {{ $n1Count }}
@@ -137,15 +133,11 @@
         @endif
 
         @if(auth()->user()->hasRole(['validator_n2', 'admin']))
-        <a href="{{ route('boost.pending-n2') }}"
-           class="sidebar-item {{ request()->routeIs('boost.pending-n2') ? 'active' : '' }}">
+        @php $n2Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n2')->count(); @endphp
+        <a href="{{ route('campaigns.pending') }}"
+           class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-shield-halved"></i></span>
             File N+2
-            @php
-                $n2Count = \Illuminate\Support\Facades\Cache::remember('sidebar_n2_count', 60, fn() =>
-                    \App\Models\BoostRequest::where('status', 'pending_n2')->count()
-                );
-            @endphp
             @if($n2Count > 0)
             <span style="margin-left:auto; background:#f59e0b; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
                 {{ $n2Count }}
@@ -155,23 +147,10 @@
         @endif
 
         @if(auth()->user()->hasRole(['validator_n1', 'validator', 'validator_n2', 'admin']))
-        <a href="{{ route('campaigns.pending') }}"
-           class="sidebar-item {{ request()->routeIs('campaigns.pending') ? 'active' : '' }}">
-            <span class="icon"><i class="fas fa-layer-group"></i></span>
-            File campagnes
-            @if($campPendingCount > 0)
-            <span style="margin-left:auto; background:#f59e0b; color:#fff; font-size:.6875rem; font-weight:700; padding:.125rem .5rem; border-radius:9999px;">
-                {{ $campPendingCount }}
-            </span>
-            @endif
-        </a>
-        @endif
-
-        @if(auth()->user()->hasRole(['validator_n1', 'validator', 'validator_n2', 'admin']))
         <a href="{{ route('boost.all') }}"
            class="sidebar-item {{ request()->routeIs('boost.all') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-list"></i></span>
-            Historique boosts
+            Historique
         </a>
         @endif
 
