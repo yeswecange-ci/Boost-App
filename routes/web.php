@@ -40,12 +40,22 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
 
     // ─── Campaigns Media Buyer ────────────────────────────────
-    Route::get('/campaigns',        [CampaignController::class, 'index'])->name('campaigns.index');
-    Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
+    Route::get('/campaigns',         [CampaignController::class, 'index'])->name('campaigns.index');
+    Route::get('/campaigns/create',  [CampaignController::class, 'create'])->name('campaigns.create');
+    Route::get('/campaigns/pending', [CampaignController::class, 'pendingList'])->name('campaigns.pending');
     Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
+
+    // Opérateur : créer, soumettre, lancer
     Route::middleware(['role:operator,admin'])->group(function () {
-        Route::post('/campaigns',                  [CampaignController::class, 'store'])->name('campaigns.store');
-        Route::post('/campaigns/{campaign}/launch',[CampaignController::class, 'launch'])->name('campaigns.launch');
+        Route::post('/campaigns',                    [CampaignController::class, 'store'])->name('campaigns.store');
+        Route::post('/campaigns/{campaign}/submit',  [CampaignController::class, 'submit'])->name('campaigns.submit');
+        Route::post('/campaigns/{campaign}/launch',  [CampaignController::class, 'launch'])->name('campaigns.launch');
+    });
+
+    // Validateur : approuver, rejeter
+    Route::middleware(['role:validator_n1,validator_n2,validator,admin'])->group(function () {
+        Route::post('/campaigns/{campaign}/approve', [CampaignController::class, 'approve'])->name('campaigns.approve');
+        Route::post('/campaigns/{campaign}/reject',  [CampaignController::class, 'reject'])->name('campaigns.reject');
     });
 
     // ─── Boost — Opérateur (operator + admin uniquement) ─────

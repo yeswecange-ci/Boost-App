@@ -117,21 +117,102 @@
         </div>
     </div>
 
+    @php
+        $user        = auth()->user();
+        $isValidator = $user->hasRole(['validator_n1','validator_n2','validator','admin']);
+        $isOperator  = $user->hasRole(['operator','admin']);
+        $isAdmin     = $user->hasRole('admin');
+        $status      = $campaign->execution_status;
+    @endphp
+
+    {{-- Motif de rejet --}}
+    @if($status === 'rejected' && $campaign->error_message)
+    <div class="alert alert-danger">
+        <strong><i class="fas fa-times-circle"></i> Campagne rejetée</strong>
+        <p style="margin:.375rem 0 0; font-size:.875rem;">{{ $campaign->error_message }}</p>
+    </div>
+    @endif
+
+    {{-- Barre d'actions --}}
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
         <a href="{{ route('campaigns.index') }}" class="btn-secondary">
             <i class="fas fa-arrow-left"></i> Retour aux campagnes
         </a>
 
-        @if(in_array($campaign->execution_status, ['draft', 'error']))
-        <form method="POST" action="{{ route('campaigns.launch', $campaign->id) }}"
-              onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Lancement…';">
-            @csrf
-            <button type="submit" class="btn-primary" style="gap:0.5rem;">
-                <i class="fas fa-rocket"></i>
-                {{ $campaign->execution_status === 'error' ? 'Relancer le boost' : 'Booster ce post' }}
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;" x-data="{ rejectOpen: false, reason: '' }">
+
+            {{-- Opérateur : soumettre pour validation --}}
+            @if($isOperator && in_array($status, ['draft','rejected']))
+            <form method="POST" action="{{ route('campaigns.submit', $campaign->id) }}">
+                @csrf
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-paper-plane"></i> Soumettre pour validation
+                </button>
+            </form>
+            @endif
+
+            {{-- Validateur : approuver --}}
+            @if($isValidator && $status === 'pending')
+            <form method="POST" action="{{ route('campaigns.approve', $campaign->id) }}">
+                @csrf
+                <button type="submit" class="btn-success">
+                    <i class="fas fa-check"></i> Approuver
+                </button>
+            </form>
+            @endif
+
+            {{-- Validateur : rejeter (modal Alpine) --}}
+            @if($isValidator && $status === 'pending')
+            <button type="button" class="btn-danger" @click="rejectOpen = true">
+                <i class="fas fa-times"></i> Rejeter
             </button>
-        </form>
-        @endif
+
+            <div x-show="rejectOpen" x-transition
+                 style="position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem;">
+                <div style="background:#fff; border-radius:0.875rem; padding:1.5rem; max-width:480px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.2);" @click.stop>
+                    <h3 style="font-size:1rem; font-weight:700; margin:0 0 .25rem;">Rejeter la campagne</h3>
+                    <p style="font-size:.875rem; color:var(--color-muted); margin:0 0 1rem;">L'opérateur recevra ce motif et pourra corriger sa campagne.</p>
+                    <form method="POST" action="{{ route('campaigns.reject', $campaign->id) }}">
+                        @csrf
+                        <textarea name="reason" x-model="reason" required
+                                  placeholder="Expliquez pourquoi cette campagne est rejetée…"
+                                  style="width:100%; padding:.75rem; border:1.5px solid var(--color-border); border-radius:.5rem; font-size:.875rem; min-height:100px; outline:none; resize:vertical;"
+                                  onfocus="this.style.borderColor='var(--color-primary)'"
+                                  onblur="this.style.borderColor='var(--color-border)'"></textarea>
+                        <div style="display:flex; gap:.75rem; justify-content:flex-end; margin-top:1rem;">
+                            <button type="button" class="btn-secondary" @click="rejectOpen = false">Annuler</button>
+                            <button type="submit" class="btn-danger" :disabled="!reason.trim()">
+                                <i class="fas fa-times"></i> Confirmer le rejet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @endif
+
+            {{-- Opérateur/Admin : booster (seulement si approuvé) --}}
+            @if($isOperator && $status === 'approved')
+            <form method="POST" action="{{ route('campaigns.launch', $campaign->id) }}"
+                  onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Lancement…';">
+                @csrf
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-rocket"></i> Booster ce post
+                </button>
+            </form>
+            @endif
+
+            {{-- Admin : bypass validation —lancement direct depuis draft/error --}}
+            @if($isAdmin && in_array($status, ['draft','error']))
+            <form method="POST" action="{{ route('campaigns.launch', $campaign->id) }}"
+                  onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Lancement…';">
+                @csrf
+                <button type="submit" class="btn-secondary">
+                    <i class="fas fa-rocket"></i> {{ $status === 'error' ? 'Relancer' : 'Lancer sans validation' }}
+                </button>
+            </form>
+            @endif
+
+        </div>
     </div>
 
 </div>

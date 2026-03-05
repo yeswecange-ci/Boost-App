@@ -37,11 +37,13 @@ class CampaignController extends Controller
 
         $base = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id));
         $counts = [
-            'all'     => $base()->count(),
-            'draft'   => $base()->where('execution_status', 'draft')->count(),
-            'running' => $base()->where('execution_status', 'running')->count(),
-            'done'    => $base()->where('execution_status', 'done')->count(),
-            'error'   => $base()->where('execution_status', 'error')->count(),
+            'all'      => $base()->count(),
+            'draft'    => $base()->where('execution_status', 'draft')->count(),
+            'pending'  => $base()->where('execution_status', 'pending')->count(),
+            'approved' => $base()->where('execution_status', 'approved')->count(),
+            'running'  => $base()->where('execution_status', 'running')->count(),
+            'done'     => $base()->where('execution_status', 'done')->count(),
+            'error'    => $base()->whereIn('execution_status', ['error','rejected'])->count(),
         ];
 
         return view('campaigns.index', compact('campaigns', 'counts', 'isValidator'));
@@ -123,17 +125,89 @@ class CampaignController extends Controller
             ->with('success', 'Campagne enregistrée ! Cliquez sur "Booster" pour la lancer.');
     }
 
+    // ── Soumettre pour validation (draft → pending) ──────────────
+    public function submit(BoostCampaign $campaign)
+    {
+        if (!in_array($campaign->execution_status, ['draft', 'rejected'])) {
+            return back()->with('error', 'Seules les campagnes en brouillon ou rejetées peuvent être soumises.');
+        }
+
+        $campaign->update([
+            'execution_status' => 'pending',
+            'error_message'    => null,
+        ]);
+
+        return redirect()->route('campaigns.show', $campaign->id)
+            ->with('success', 'Campagne soumise pour validation.');
+    }
+
+    // ── Approuver (pending → approved) ───────────────────────────
+    public function approve(BoostCampaign $campaign)
+    {
+        if ($campaign->execution_status !== 'pending') {
+            return back()->with('error', 'Cette campagne n\'est pas en attente de validation.');
+        }
+
+        $campaign->update([
+            'execution_status' => 'approved',
+            'error_message'    => null,
+        ]);
+
+        return redirect()->route('campaigns.show', $campaign->id)
+            ->with('success', 'Campagne approuvée. L\'opérateur peut maintenant la booster.');
+    }
+
+    // ── Rejeter (pending → rejected) ─────────────────────────────
+    public function reject(BoostCampaign $campaign)
+    {
+        if ($campaign->execution_status !== 'pending') {
+            return back()->with('error', 'Cette campagne n\'est pas en attente de validation.');
+        }
+
+        request()->validate(['reason' => 'required|string|max:500']);
+
+        $campaign->update([
+            'execution_status' => 'rejected',
+            'error_message'    => request('reason'),
+        ]);
+
+        return redirect()->route('campaigns.show', $campaign->id)
+            ->with('success', 'Campagne rejetée. L\'opérateur sera notifié.');
+    }
+
+    // ── Lancer le boost (approved → running) ─────────────────────
     public function launch(BoostCampaign $campaign)
     {
-        if (!in_array($campaign->execution_status, ['draft', 'error'])) {
-            return redirect()->route('campaigns.show', $campaign->id)
-                ->with('error', 'Cette campagne ne peut pas être (re)lancée dans son état actuel.');
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('admin');
+
+        // Admin peut lancer sans validation, opérateur seulement si approved
+        if (!$isAdmin && $campaign->execution_status !== 'approved') {
+            return back()->with('error', 'La campagne doit être approuvée avant d\'être boostée.');
+        }
+
+        if ($isAdmin && !in_array($campaign->execution_status, ['draft','approved','error'])) {
+            return back()->with('error', 'Cette campagne ne peut pas être lancée dans son état actuel.');
         }
 
         $this->triggerN8n($campaign);
 
         return redirect()->route('campaigns.show', $campaign->id)
             ->with('success', 'Boost lancé ! n8n va créer la campagne sur Meta Ads.');
+    }
+
+    // ── Liste campagnes en attente de validation ──────────────────
+    public function pendingList()
+    {
+        $user = auth()->user();
+        $campaigns = BoostCampaign::with('user')
+            ->where('execution_status', 'pending')
+            ->latest()
+            ->paginate(20);
+
+        $pendingCount = BoostCampaign::where('execution_status', 'pending')->count();
+
+        return view('campaigns.pending', compact('campaigns', 'pendingCount'));
     }
 
     public function show(BoostCampaign $campaign)

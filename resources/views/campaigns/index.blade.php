@@ -8,9 +8,9 @@
 {{-- KPI --}}
 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
     @foreach([
-        ['label'=>'Total',      'val'=>$counts['all'],     'icon'=>'fa-layer-group', 'color'=>'#4f46e5', 'bg'=>'#eef2ff', 'status'=>''],
-        ['label'=>'Brouillons', 'val'=>$counts['draft'],   'icon'=>'fa-pen',         'color'=>'#64748b', 'bg'=>'#f1f5f9', 'status'=>'draft'],
-        ['label'=>'En cours',   'val'=>$counts['running'], 'icon'=>'fa-spinner',     'color'=>'#1e40af', 'bg'=>'#dbeafe', 'status'=>'running'],
+        ['label'=>'Total',      'val'=>$counts['all'],      'icon'=>'fa-layer-group', 'color'=>'#4f46e5', 'bg'=>'#eef2ff', 'status'=>''],
+        ['label'=>'À valider',  'val'=>$counts['pending'], 'icon'=>'fa-clock',       'color'=>'#854d0e', 'bg'=>'#fef9c3', 'status'=>'pending'],
+        ['label'=>'Approuvées', 'val'=>$counts['approved'],'icon'=>'fa-check',       'color'=>'#0369a1', 'bg'=>'#e0f2fe', 'status'=>'approved'],
         ['label'=>'Créées',     'val'=>$counts['done'],    'icon'=>'fa-check-circle','color'=>'#15803d', 'bg'=>'#dcfce7', 'status'=>'done'],
         ['label'=>'Erreurs',    'val'=>$counts['error'],   'icon'=>'fa-times-circle','color'=>'#b91c1c', 'bg'=>'#fee2e2', 'status'=>'error'],
     ] as $kpi)

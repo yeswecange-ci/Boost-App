@@ -75,6 +75,16 @@
            class="sidebar-item {{ request()->routeIs('campaigns.*') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-layer-group"></i></span>
             Campagnes Media
+            @php
+                $campPendingCount = \Illuminate\Support\Facades\Cache::remember('sidebar_camp_pending', 60, fn() =>
+                    \App\Models\BoostCampaign::where('execution_status', 'pending')->count()
+                );
+            @endphp
+            @if($campPendingCount > 0 && auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']))
+            <span style="margin-left:auto; background:#f59e0b; color:#fff; font-size:.6875rem; font-weight:700; padding:.125rem .5rem; border-radius:9999px;">
+                {{ $campPendingCount }}
+            </span>
+            @endif
         </a>
 
         @if(auth()->user()->hasRole(['admin']))
