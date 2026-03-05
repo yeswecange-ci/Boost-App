@@ -20,7 +20,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT * FROM boost_campaigns WHERE id = {{ $json.body.campaign_db_id }} LIMIT 1"
+        "query": "SELECT bc.*, fp.access_token AS page_access_token, fp.ad_account_id AS page_ad_account_id FROM boost_campaigns bc JOIN facebook_posts p ON p.post_id = bc.post_id JOIN facebook_pages fp ON fp.id = p.facebook_page_id WHERE bc.id = {{ $json.body.campaign_db_id }} LIMIT 1"
       },
       "id": "a1b2c3d4-0002-0002-0002-000000000002",
       "name": "MySQL — SELECT boost_campaigns",
@@ -102,13 +102,19 @@
             {
               "id": "meta-token",
               "name": "meta_ads_token",
-              "value": "COLLER_TOKEN_META_ICI",
+              "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.page_access_token }}",
               "type": "string"
             },
             {
               "id": "meta-account",
               "name": "ad_account_id",
-              "value": "act_COLLER_ID_COMPTE_ICI",
+              "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.page_ad_account_id }}",
+              "type": "string"
+            },
+            {
+              "id": "callback-secret",
+              "name": "callback_secret",
+              "value": "={{ $('Webhook — Reçoit campaign_db_id').item.json.body.callback_secret || '' }}",
               "type": "string"
             }
           ]
@@ -298,6 +304,12 @@
       "parameters": {
         "method": "POST",
         "url": "YOUR_LARAVEL_URL/webhook/n8n/campaign-done",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-N8N-Secret", "value": "={{ $('Build Payload depuis BD').item.json.callback_secret }}" }
+          ]
+        },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
@@ -383,6 +395,12 @@
       "parameters": {
         "method": "POST",
         "url": "YOUR_LARAVEL_URL/webhook/n8n/campaign-done",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-N8N-Secret", "value": "={{ $('Build Payload depuis BD').item.json.callback_secret }}" }
+          ]
+        },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {

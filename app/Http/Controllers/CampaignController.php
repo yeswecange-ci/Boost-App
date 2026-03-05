@@ -40,7 +40,11 @@ class CampaignController extends Controller
         $query->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds));
 
         if ($status = $request->get('status')) {
-            $query->where('execution_status', $status);
+            if ($status === 'done') {
+                $query->whereIn('execution_status', ['done', 'paused_ready']);
+            } else {
+                $query->where('execution_status', $status);
+            }
         }
 
         $campaigns = $query->paginate(15)->withQueryString();
@@ -53,7 +57,7 @@ class CampaignController extends Controller
             'pending_n1' => $base()->where('execution_status', 'pending_n1')->count(),
             'pending_n2' => $base()->where('execution_status', 'pending_n2')->count(),
             'approved'   => $base()->where('execution_status', 'approved')->count(),
-            'done'       => $base()->where('execution_status', 'done')->count(),
+            'done'       => $base()->whereIn('execution_status', ['done', 'paused_ready'])->count(),
             'error'      => $base()->whereIn('execution_status', ['error','rejected'])->count(),
         ];
 
@@ -298,9 +302,10 @@ class CampaignController extends Controller
 
     public function n8nCallback(Request $request)
     {
-        // Vérification secret
-        $secret = SettingService::get('n8n.secret');
-        if ($secret && $request->header('X-N8N-Secret') !== $secret) {
+        // Vérification secret (timing-safe)
+        $secret   = SettingService::get('n8n.secret');
+        $received = $request->header('X-N8N-Secret', '');
+        if ($secret && !hash_equals($secret, $received)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -309,7 +314,9 @@ class CampaignController extends Controller
             return response()->json(['error' => 'Campaign not found'], 404);
         }
 
+        // N8N envoie 'done' → campagne créée sur Meta en PAUSED, en attente d'activation
         $status = $request->input('execution_status', 'done');
+        if ($status === 'done') $status = 'paused_ready';
 
         $campaign->update([
             'execution_status' => $status,
@@ -317,7 +324,7 @@ class CampaignController extends Controller
             'meta_adset_id'    => $request->input('meta_adset_id'),
             'meta_ad_id'       => $request->input('meta_ad_id'),
             'error_message'    => $request->input('error_message'),
-            'launched_at'      => $status === 'done' ? now() : null,
+            'launched_at'      => $status === 'paused_ready' ? now() : null,
         ]);
 
         return response()->json(['success' => true]);
@@ -357,7 +364,7 @@ class CampaignController extends Controller
         if ($mockMode || !$webhookUrl) {
             // Simulation : marquer done immédiatement
             $campaign->update([
-                'execution_status' => 'done',
+                'execution_status' => 'paused_ready',
                 'launched_at'      => now(),
                 'meta_campaign_id' => 'mock_camp_' . $campaign->id,
                 'meta_adset_id'    => 'mock_adset_' . $campaign->id,
@@ -374,7 +381,10 @@ class CampaignController extends Controller
 
             Http::timeout($timeout)
                 ->withHeaders(array_filter(['X-N8N-Secret' => $secret]))
-                ->post($webhookUrl, ['campaign_db_id' => $campaign->id]);
+                ->post($webhookUrl, [
+                    'campaign_db_id'  => $campaign->id,
+                    'callback_secret' => $secret,
+                ]);
 
         } catch (\Throwable $e) {
             Log::error('CampaignController::triggerN8n', ['error' => $e->getMessage()]);

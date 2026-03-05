@@ -62,8 +62,9 @@ class BoostCampaign extends Model
             'approved'   => 'Approuvée',
             'rejected'   => 'Rejetée',
             'running'    => 'En cours…',
-            'done'       => 'Créée sur Meta',
-            'error'      => 'Erreur',
+            'done'         => 'Créée sur Meta',
+            'paused_ready' => 'Créée sur Meta (PAUSED)',
+            'error'        => 'Erreur',
             default      => ucfirst($this->execution_status),
         };
     }
@@ -77,8 +78,9 @@ class BoostCampaign extends Model
             'approved'   => 'badge-status-approved',
             'rejected'   => 'badge-status-rejected',
             'running'    => 'badge-status-pending',
-            'done'       => 'badge-status-active',
-            'error'      => 'badge-status-rejected',
+            'done'         => 'badge-status-active',
+            'paused_ready' => 'badge-status-created',
+            'error'        => 'badge-status-rejected',
             default      => 'badge-status-draft',
         };
     }
