@@ -178,14 +178,15 @@ class BoostController extends Controller
 
     private function notifyN1Validators(BoostRequest $boost): void
     {
-        $n1Users = User::role(['validator_n1', 'validator'])->get();
-        foreach ($n1Users as $user) {
-            $user->notify(new BoostSubmittedNotification($boost));
-        }
-        $admins = User::role('admin')->get();
-        foreach ($admins as $admin) {
-            $admin->notify(new BoostSubmittedNotification($boost));
-        }
+        // Résoudre l'ID DB de la page à partir du page_id Facebook (string)
+        $boostFbPageDbId = \App\Models\FacebookPage::where('page_id', $boost->page_id)->value('id');
+
+        $n1Users = User::role(['validator_n1', 'validator'])
+            ->when($boostFbPageDbId, fn($q) => $q->whereHas('facebookPages', fn($q2) => $q2->where('facebook_pages.id', $boostFbPageDbId)))
+            ->get();
+
+        $n1Users->each(fn($u) => $u->notify(new BoostSubmittedNotification($boost)));
+        User::role('admin')->get()->each(fn($a) => $a->notify(new BoostSubmittedNotification($boost)));
     }
 
     // ─────────────────────────────────────────────────────────

@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\BoostCampaign;
 use App\Models\FacebookPage;
 use App\Models\FacebookPost;
+use App\Models\User;
+use App\Notifications\CampaignSubmittedNotification;
+use App\Notifications\CampaignPendingN2Notification;
 use App\Services\SettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -62,9 +65,16 @@ class CampaignController extends Controller
         $postId = $request->get('post_id');
 
         // Charger le post depuis posts_master si post_id fourni
-        $post = null;
+        $post    = null;
+        $pageIds = auth()->user()->scopedFacebookPageIds();
+
         if ($postId) {
             $post = FacebookPost::with('page')->where('post_id', $postId)->first();
+
+            // Vérifier que l'utilisateur a accès à la page de ce post
+            if ($post && $pageIds !== null && !in_array($post->facebook_page_id, $pageIds)) {
+                abort(403, 'Vous n\'avez pas accès à la page de ce post.');
+            }
         }
 
         // Si pas de post trouvé, lister les posts boostables filtrés par pages assignées
@@ -107,6 +117,13 @@ class CampaignController extends Controller
         $interests = null;
         if ($request->filled('interests_value')) {
             $interests = json_decode($request->interests_value, true) ?: null;
+        }
+
+        // Vérification d'accès page avant création
+        $postForCheck = FacebookPost::where('post_id', $request->post_id)->first();
+        $pageIdsCheck = auth()->user()->scopedFacebookPageIds();
+        if ($postForCheck && $pageIdsCheck !== null && !in_array($postForCheck->facebook_page_id, $pageIdsCheck)) {
+            abort(403, 'Vous n\'avez pas accès à la page de ce post.');
         }
 
         $campaign = BoostCampaign::create([
@@ -152,8 +169,10 @@ class CampaignController extends Controller
             'error_message'    => null,
         ]);
 
+        $this->notifyCampaignN1Validators($campaign);
+
         return redirect()->route('campaigns.show', $campaign->id)
-            ->with('success', 'Campagne soumise — en attente de validation N+1.');
+            ->with('success', 'Campagne soumise — les validateurs N+1 ont été notifiés.');
     }
 
     // ── Approuver (pending_n1 → pending_n2, pending_n2 → approved) ─
@@ -169,8 +188,9 @@ class CampaignController extends Controller
                 return back()->with('error', 'Vous ne pouvez pas valider votre propre campagne.');
             }
             $campaign->update(['execution_status' => 'pending_n2', 'error_message' => null]);
+            $this->notifyCampaignN2Validators($campaign);
             return redirect()->route('campaigns.show', $campaign->id)
-                ->with('success', 'Validation N+1 accordée — en attente de la validation N+2.');
+                ->with('success', 'Validation N+1 accordée — les validateurs N+2 ont été notifiés.');
         }
 
         if ($campaign->execution_status === 'pending_n2') {
@@ -301,6 +321,30 @@ class CampaignController extends Controller
         ]);
 
         return response()->json(['success' => true]);
+    }
+
+    // ── Notifications validateurs (filtrées par page) ──────────
+
+    private function notifyCampaignN1Validators(BoostCampaign $campaign): void
+    {
+        $pageId  = FacebookPost::where('post_id', $campaign->post_id)->value('facebook_page_id');
+        $n1Users = User::role(['validator_n1', 'validator'])
+            ->when($pageId, fn($q) => $q->whereHas('facebookPages', fn($q2) => $q2->where('facebook_pages.id', $pageId)))
+            ->get();
+
+        $n1Users->each(fn($u) => $u->notify(new CampaignSubmittedNotification($campaign)));
+        User::role('admin')->get()->each(fn($a) => $a->notify(new CampaignSubmittedNotification($campaign)));
+    }
+
+    private function notifyCampaignN2Validators(BoostCampaign $campaign): void
+    {
+        $pageId  = FacebookPost::where('post_id', $campaign->post_id)->value('facebook_page_id');
+        $n2Users = User::role('validator_n2')
+            ->when($pageId, fn($q) => $q->whereHas('facebookPages', fn($q2) => $q2->where('facebook_pages.id', $pageId)))
+            ->get();
+
+        $n2Users->each(fn($u) => $u->notify(new CampaignPendingN2Notification($campaign)));
+        User::role('admin')->get()->each(fn($a) => $a->notify(new CampaignPendingN2Notification($campaign)));
     }
 
     // ── Envoi vers n8n ──
