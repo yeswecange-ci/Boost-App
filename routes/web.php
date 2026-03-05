@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\PageAssignmentController;
 
 Route::get('/', fn() => redirect()->route('login'));
 
@@ -69,6 +70,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/boost/create',          [BoostController::class, 'create'])->name('boost.create');
         Route::post('/boost',                [BoostController::class, 'store'])->name('boost.store');
         Route::post('/boost/{boost}/submit', [BoostController::class, 'submit'])->name('boost.submit');
+    });
+
+    // ─── Page Assignments (admin only) ───────────────────────
+    Route::middleware(['role:admin'])->prefix('admin')->name('page-assignments.')->group(function () {
+        Route::get('/page-assignments',  [PageAssignmentController::class, 'index'])->name('index');
+        Route::post('/page-assignments', [PageAssignmentController::class, 'update'])->name('update');
     });
 
     // ─── Users (admin only) ──────────────────────────────────

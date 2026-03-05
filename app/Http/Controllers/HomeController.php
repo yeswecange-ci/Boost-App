@@ -21,8 +21,14 @@ class HomeController extends Controller
         $isN1        = $user->hasRole(['validator_n1', 'validator', 'admin']);
         $isN2        = $user->hasRole(['validator_n2', 'admin']);
 
-        // Stats campagnes — filtrées par rôle (opérateurs voient les leurs, validateurs voient tout)
-        $campBase = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id));
+        // Stats campagnes — filtrées par rôle et par pages assignées
+        $pageIds        = $user->scopedFacebookPageIds(); // null = admin
+        $allowedPostIds = $pageIds !== null
+            ? FacebookPost::whereIn('facebook_page_id', $pageIds)->pluck('post_id')
+            : null;
+
+        $campBase = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id))
+            ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds));
 
         $campaignCounts = [
             'total'      => $campBase()->count(),

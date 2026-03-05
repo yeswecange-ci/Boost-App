@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class FacebookPage extends Model
 {
@@ -13,4 +14,9 @@ class FacebookPage extends Model
     protected $hidden = ['access_token'];
 
     protected $casts = ['is_active' => 'boolean'];
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'facebook_page_user');
+    }
 }

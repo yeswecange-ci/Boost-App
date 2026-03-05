@@ -110,6 +110,11 @@
             <span class="icon"><i class="fas fa-users"></i></span>
             Utilisateurs
         </a>
+        <a href="{{ route('page-assignments.index') }}"
+           class="sidebar-item {{ request()->routeIs('page-assignments.*') ? 'active' : '' }}">
+            <span class="icon"><i class="fas fa-sitemap"></i></span>
+            Assignation pages
+        </a>
         @endif
 
         @if(auth()->user()->hasRole(['validator_n1', 'validator', 'validator_n2', 'admin']))

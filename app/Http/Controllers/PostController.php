@@ -11,14 +11,14 @@ class PostController extends Controller
 
     public function index(Request $request)
     {
-        // Récupère les pages disponibles pour cet utilisateur
-        $user  = auth()->user();
-        $pages = FacebookPage::where('is_active', true)->get();
+        // Récupère les pages disponibles pour cet utilisateur (filtre pivot)
+        $user    = auth()->user();
+        $pageIds = $user->scopedFacebookPageIds(); // null = admin = tout voir
 
-        // Si admin ou validator → toutes les pages
-        // Si operator → seulement ses pages assignées
-        if ($user->hasRole('operator') && !empty($user->page_ids)) {
-            $pages = $pages->whereIn('page_id', $user->page_ids);
+        if ($pageIds !== null) {
+            $pages = FacebookPage::where('is_active', true)->whereIn('id', $pageIds)->get();
+        } else {
+            $pages = FacebookPage::where('is_active', true)->get();
         }
 
         // Page sélectionnée (par défaut la première)

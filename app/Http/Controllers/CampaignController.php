@@ -23,11 +23,18 @@ class CampaignController extends Controller
         $user        = auth()->user();
         $isValidator = $user->hasRole(['validator_n1', 'validator_n2', 'validator', 'admin']);
 
+        $pageIds       = $user->scopedFacebookPageIds(); // null = admin
+        $allowedPostIds = $pageIds !== null
+            ? FacebookPost::whereIn('facebook_page_id', $pageIds)->pluck('post_id')
+            : null;
+
         $query = BoostCampaign::with('user')->latest();
 
         if (!$isValidator) {
             $query->where('user_id', $user->id);
         }
+
+        $query->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds));
 
         if ($status = $request->get('status')) {
             $query->where('execution_status', $status);
@@ -35,7 +42,8 @@ class CampaignController extends Controller
 
         $campaigns = $query->paginate(15)->withQueryString();
 
-        $base = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id));
+        $base = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id))
+            ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds));
         $counts = [
             'all'        => $base()->count(),
             'draft'      => $base()->where('execution_status', 'draft')->count(),
@@ -59,11 +67,13 @@ class CampaignController extends Controller
             $post = FacebookPost::with('page')->where('post_id', $postId)->first();
         }
 
-        // Si pas de post trouvé, lister tous les posts boostables pour sélection
+        // Si pas de post trouvé, lister les posts boostables filtrés par pages assignées
         $posts = null;
         if (!$post) {
+            $pageIds = auth()->user()->scopedFacebookPageIds();
             $posts = FacebookPost::with('page')
                 ->where('is_boostable', 1)
+                ->when($pageIds !== null, fn($q) => $q->whereIn('facebook_page_id', $pageIds))
                 ->orderByDesc('posted_at')
                 ->get();
         }
@@ -225,25 +235,36 @@ class CampaignController extends Controller
     // ── File d'attente validateurs ────────────────────────────────
     public function pendingList()
     {
-        $user = auth()->user();
+        $user    = auth()->user();
+        $pageIds = $user->scopedFacebookPageIds();
+        $allowedPostIds = $pageIds !== null
+            ? FacebookPost::whereIn('facebook_page_id', $pageIds)->pluck('post_id')
+            : null;
 
         if ($user->hasRole('admin')) {
             $campaigns = BoostCampaign::with('user')
                 ->whereIn('execution_status', ['pending_n1', 'pending_n2'])
+                ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds))
                 ->latest()->paginate(20);
         } elseif ($user->hasRole('validator_n2')) {
             $campaigns = BoostCampaign::with('user')
                 ->where('execution_status', 'pending_n2')
+                ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds))
                 ->latest()->paginate(20);
         } else {
             // validator_n1 / validator
             $campaigns = BoostCampaign::with('user')
                 ->where('execution_status', 'pending_n1')
+                ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds))
                 ->latest()->paginate(20);
         }
 
-        $pendingN1Count = BoostCampaign::where('execution_status', 'pending_n1')->count();
-        $pendingN2Count = BoostCampaign::where('execution_status', 'pending_n2')->count();
+        $pendingN1Count = BoostCampaign::where('execution_status', 'pending_n1')
+            ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds))
+            ->count();
+        $pendingN2Count = BoostCampaign::where('execution_status', 'pending_n2')
+            ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds))
+            ->count();
 
         return view('campaigns.pending', compact('campaigns', 'pendingN1Count', 'pendingN2Count'));
     }
