@@ -44,7 +44,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
     Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
     Route::middleware(['role:operator,admin'])->group(function () {
-        Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+        Route::post('/campaigns',                  [CampaignController::class, 'store'])->name('campaigns.store');
+        Route::post('/campaigns/{campaign}/launch',[CampaignController::class, 'launch'])->name('campaigns.launch');
     });
 
     // ─── Boost — Opérateur (operator + admin uniquement) ─────

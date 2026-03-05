@@ -117,10 +117,21 @@
         </div>
     </div>
 
-    <div class="card-footer" style="background:transparent; border:none; padding:0;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
         <a href="{{ route('campaigns.index') }}" class="btn-secondary">
             <i class="fas fa-arrow-left"></i> Retour aux campagnes
         </a>
+
+        @if(in_array($campaign->execution_status, ['draft', 'error']))
+        <form method="POST" action="{{ route('campaigns.launch', $campaign->id) }}"
+              onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Lancement…';">
+            @csrf
+            <button type="submit" class="btn-primary" style="gap:0.5rem;">
+                <i class="fas fa-rocket"></i>
+                {{ $campaign->execution_status === 'error' ? 'Relancer le boost' : 'Booster ce post' }}
+            </button>
+        </form>
+        @endif
     </div>
 
 </div>

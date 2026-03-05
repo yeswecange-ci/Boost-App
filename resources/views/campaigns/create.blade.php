@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('page-title', 'Nouvelle campagne')
-@section('page-subtitle', 'Agent Media Buyer YWC — Boost Post · Meta Ads API')
+@section('page-subtitle', 'Agent Media Buyer YWC — Configurez votre boost')
 
 @section('content')
 
@@ -31,76 +31,52 @@
                     <i class="fas fa-bullhorn" style="color:var(--color-primary);"></i>
                     <div>
                         <div>Campagne</div>
-                        <div style="font-size:0.75rem; font-weight:400; color:var(--color-muted);">Niveau 1 · Campaign Object · Meta Ads API</div>
+                        <div style="font-size:.75rem; font-weight:400; color:var(--color-muted);">Paramètres généraux de la campagne</div>
                     </div>
                 </div>
             </div>
             <div class="card-body">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
 
-                    {{-- Nom campagne --}}
                     <div style="grid-column:1/-1;">
                         <label class="form-label">Nom de la campagne <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="campaign_name" class="form-control"
                                value="{{ $defaultCampaignName }}"
-                               placeholder="ex: BOOST POST – Lancement Peugeot 3008 – Mar 2026"
+                               placeholder="ex: BOOST POST – Lancement produit – Mars 2026"
                                style="{{ $errors->has('campaign_name') ? 'border-color:#ef4444;' : '' }}">
                         @error('campaign_name')<div class="invalid-feedback" style="display:block;">{{ $message }}</div>@enderror
-                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Inclure le mois et l'objectif pour retrouver facilement dans Meta Ads Manager</p>
                     </div>
 
-                    {{-- Objectif --}}
                     <div>
-                        <label class="form-label">
-                            Objectif <span style="color:#ef4444;">*</span>
-
-                        </label>
+                        <label class="form-label">Objectif publicitaire <span style="color:#ef4444;">*</span></label>
                         <select name="campaign_objective" class="form-control" id="sel_objective" onchange="updateSummary()">
-                            @foreach([
-                                'OUTCOME_TRAFFIC'       => 'OUTCOME_TRAFFIC — Trafic (défaut)',
-                                'OUTCOME_AWARENESS'     => 'OUTCOME_AWARENESS — Notoriété',
-                                'OUTCOME_ENGAGEMENT'    => 'OUTCOME_ENGAGEMENT — Engagement',
-                                'OUTCOME_LEADS'         => 'OUTCOME_LEADS — Génération de leads',
-                                'OUTCOME_SALES'         => 'OUTCOME_SALES — Ventes',
-                                'OUTCOME_APP_PROMOTION' => 'OUTCOME_APP_PROMOTION — App',
-                            ] as $val => $label)
-                            <option value="{{ $val }}" {{ old('campaign_objective','OUTCOME_TRAFFIC') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                            @endforeach
+                            <option value="OUTCOME_TRAFFIC"       {{ old('campaign_objective','OUTCOME_TRAFFIC') === 'OUTCOME_TRAFFIC'       ? 'selected' : '' }}>Trafic (visites & clics)</option>
+                            <option value="OUTCOME_AWARENESS"     {{ old('campaign_objective','OUTCOME_TRAFFIC') === 'OUTCOME_AWARENESS'     ? 'selected' : '' }}>Notoriété de la marque</option>
+                            <option value="OUTCOME_ENGAGEMENT"    {{ old('campaign_objective','OUTCOME_TRAFFIC') === 'OUTCOME_ENGAGEMENT'    ? 'selected' : '' }}>Engagement (likes, partages)</option>
+                            <option value="OUTCOME_LEADS"         {{ old('campaign_objective','OUTCOME_TRAFFIC') === 'OUTCOME_LEADS'         ? 'selected' : '' }}>Génération de prospects</option>
+                            <option value="OUTCOME_SALES"         {{ old('campaign_objective','OUTCOME_TRAFFIC') === 'OUTCOME_SALES'         ? 'selected' : '' }}>Ventes</option>
+                            <option value="OUTCOME_APP_PROMOTION" {{ old('campaign_objective','OUTCOME_TRAFFIC') === 'OUTCOME_APP_PROMOTION' ? 'selected' : '' }}>Promotion d'application</option>
                         </select>
-                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">OUTCOME_TRAFFIC → optimise pour les clics vers le post</p>
                     </div>
 
-                    {{-- Catégorie spéciale --}}
                     <div>
-                        <label class="form-label">
-                            Catégorie spéciale
-
-                        </label>
+                        <label class="form-label">Catégorie réglementaire</label>
                         <select name="special_ad_categories" class="form-control">
-                            @foreach([
-                                'NONE'                      => 'NONE — Aucune (défaut)',
-                                'CREDIT'                    => 'CREDIT — Crédit / Finance',
-                                'EMPLOYMENT'                => 'EMPLOYMENT — Emploi',
-                                'HOUSING'                   => 'HOUSING — Immobilier',
-                                'ISSUES_ELECTIONS_POLITICS' => 'ISSUES_ELECTIONS_POLITICS — Politique',
-                            ] as $val => $label)
-                            <option value="{{ $val }}" {{ old('special_ad_categories','NONE') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                            @endforeach
+                            <option value="NONE"                      {{ old('special_ad_categories','NONE') === 'NONE'                      ? 'selected' : '' }}>Aucune (standard)</option>
+                            <option value="CREDIT"                    {{ old('special_ad_categories','NONE') === 'CREDIT'                    ? 'selected' : '' }}>Crédit / Finance</option>
+                            <option value="EMPLOYMENT"                {{ old('special_ad_categories','NONE') === 'EMPLOYMENT'                ? 'selected' : '' }}>Offres d'emploi</option>
+                            <option value="HOUSING"                   {{ old('special_ad_categories','NONE') === 'HOUSING'                   ? 'selected' : '' }}>Immobilier</option>
+                            <option value="ISSUES_ELECTIONS_POLITICS" {{ old('special_ad_categories','NONE') === 'ISSUES_ELECTIONS_POLITICS' ? 'selected' : '' }}>Politique / Élections</option>
                         </select>
-                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Obligatoire pour certains secteurs</p>
+                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Obligatoire pour certains secteurs réglementés</p>
                     </div>
 
-                    {{-- Statut campagne --}}
                     <div>
-                        <label class="form-label">
-                            Statut initial
-
-                        </label>
+                        <label class="form-label">Démarrage de la campagne</label>
                         <select name="campaign_status" class="form-control" id="sel_status" onchange="updateSummary()">
-                            <option value="PAUSED" {{ old('campaign_status','PAUSED') === 'PAUSED' ? 'selected' : '' }}>PAUSED — En pause (recommandé)</option>
-                            <option value="ACTIVE" {{ old('campaign_status','PAUSED') === 'ACTIVE' ? 'selected' : '' }}>ACTIVE — Active immédiatement</option>
+                            <option value="PAUSED" {{ old('campaign_status','PAUSED') === 'PAUSED' ? 'selected' : '' }}>En pause — vérifier avant de diffuser (recommandé)</option>
+                            <option value="ACTIVE" {{ old('campaign_status','PAUSED') === 'ACTIVE' ? 'selected' : '' }}>Active immédiatement</option>
                         </select>
-                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">PAUSED permet de vérifier avant diffusion</p>
                     </div>
 
                     {{-- Toggle campagne existante --}}
@@ -110,17 +86,16 @@
                             <input type="checkbox" x-model="open"
                                    style="width:18px; height:18px; accent-color:var(--color-primary); flex-shrink:0; cursor:pointer;">
                             <div>
-                                <div style="font-size:.875rem; font-weight:600; color:var(--color-heading);">Utiliser une campagne existante</div>
-                                <div style="font-size:.75rem; color:var(--color-muted);">Si coché → l'Ad Set sera ajouté à une campagne déjà créée dans Meta</div>
+                                <div style="font-size:.875rem; font-weight:600; color:var(--color-heading);">Rattacher à une campagne existante</div>
+                                <div style="font-size:.75rem; color:var(--color-muted);">L'Ad Set sera ajouté à une campagne déjà créée dans Meta Ads Manager</div>
                             </div>
                         </label>
-
                         <div x-show="open" x-transition style="margin-top:.75rem;">
                             <label class="form-label">ID de la campagne existante <span style="color:#ef4444;">*</span></label>
                             <input type="text" name="existing_campaign_id" class="form-control"
                                    value="{{ old('existing_campaign_id') }}"
                                    placeholder="ex: 120241034883010205">
-                            <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Récupère l'ID dans Meta Ads Manager → Campagnes → colonne ID</p>
+                            <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Retrouvez cet ID dans Meta Ads Manager → Campagnes → colonne ID</p>
                             @error('existing_campaign_id')<div class="invalid-feedback" style="display:block;">{{ $message }}</div>@enderror
                         </div>
                     </div>
@@ -137,56 +112,43 @@
                 <div style="display:flex; align-items:center; gap:0.625rem;">
                     <i class="fas fa-crosshairs" style="color:var(--color-primary);"></i>
                     <div>
-                        <div>Ad Set — Ciblage &amp; Budget</div>
-                        <div style="font-size:.75rem; font-weight:400; color:var(--color-muted);">Niveau 2 · Définit QUI voit la pub et COMBIEN on dépense</div>
+                        <div>Ciblage &amp; Budget</div>
+                        <div style="font-size:.75rem; font-weight:400; color:var(--color-muted);">Qui voit votre pub, combien vous dépensez et pendant combien de temps</div>
                     </div>
                 </div>
             </div>
             <div class="card-body">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
 
-                    {{-- Nom Ad Set --}}
                     <div style="grid-column:1/-1;">
-                        <label class="form-label">Nom de l'Ad Set <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label">Nom du groupe d'annonces <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="adset_name" class="form-control"
                                value="{{ $defaultAdsetName }}"
                                style="{{ $errors->has('adset_name') ? 'border-color:#ef4444;' : '' }}">
                         @error('adset_name')<div class="invalid-feedback" style="display:block;">{{ $message }}</div>@enderror
                     </div>
 
-                    {{-- Type de budget --}}
                     <div>
-                        <label class="form-label">
-                            Type de budget
-
-                        </label>
+                        <label class="form-label">Type de budget</label>
                         <select name="budget_type" class="form-control" id="sel_budget_type" onchange="updateBudgetHint()">
-                            <option value="lifetime_budget" {{ old('budget_type','lifetime_budget') === 'lifetime_budget' ? 'selected' : '' }}>lifetime_budget — Budget total sur la période</option>
-                            <option value="daily_budget"    {{ old('budget_type','lifetime_budget') === 'daily_budget'    ? 'selected' : '' }}>daily_budget — Budget par jour</option>
+                            <option value="lifetime_budget" {{ old('budget_type','lifetime_budget') === 'lifetime_budget' ? 'selected' : '' }}>Budget total (réparti sur la durée)</option>
+                            <option value="daily_budget"    {{ old('budget_type','lifetime_budget') === 'daily_budget'    ? 'selected' : '' }}>Budget quotidien (par jour)</option>
                         </select>
-                        <p id="budget_type_hint" style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Le budget total est réparti automatiquement sur la durée choisie</p>
+                        <p id="budget_type_hint" style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Le montant sera réparti automatiquement sur toute la durée</p>
                     </div>
 
-                    {{-- Durée --}}
                     <div>
-                        <label class="form-label">
-                            Durée de diffusion
-
-                        </label>
+                        <label class="form-label">Durée de diffusion <span style="color:#ef4444;">*</span></label>
                         <select name="duration_days" class="form-control" id="sel_duration" onchange="updateSummary()">
-                            @foreach([1=>'1 jour',3=>'3 jours',7=>'7 jours (défaut)',14=>'14 jours',30=>'30 jours'] as $d => $lbl)
+                            @foreach([1=>'1 jour',3=>'3 jours',7=>'7 jours (recommandé)',14=>'14 jours',30=>'30 jours'] as $d => $lbl)
                             <option value="{{ $d }}" {{ old('duration_days',7) == $d ? 'selected' : '' }}>{{ $lbl }}</option>
                             @endforeach
                         </select>
                         @error('duration_days')<div class="invalid-feedback" style="display:block;">{{ $message }}</div>@enderror
                     </div>
 
-                    {{-- Budget pills --}}
                     <div style="grid-column:1/-1;">
-                        <label class="form-label">
-                            Budget (FCFA)
-
-                        </label>
+                        <label class="form-label">Budget (FCFA) <span style="color:#ef4444;">*</span></label>
                         <input type="hidden" name="budget_value" id="budget_value" value="{{ old('budget_value',7000) }}">
                         <div style="display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.75rem;" id="budgetPills">
                             @foreach([3500,7000,14000,35000,70000] as $b)
@@ -206,26 +168,26 @@
                                    onblur="if(!this.value)this.style.borderColor='var(--color-border)'">
                         </div>
                         @error('budget_value')<div class="invalid-feedback" style="display:block;">{{ $message }}</div>@enderror
-                        <p style="margin:0; font-size:.75rem; color:var(--color-muted);">Meta attend la valeur en centimes → 7 000 FCFA = 700 centimes envoyés à l'API</p>
                     </div>
 
-                    {{-- Pays cibles --}}
                     <div style="grid-column:1/-1;">
-                        <label class="form-label">
-                            Pays cibles
-
-                        </label>
+                        <label class="form-label">Pays cibles <span style="color:#ef4444;">*</span></label>
                         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem;" id="countriesGrid">
                             @foreach([
-                                'CI'=>'🇨🇮 CI — Côte d\'Ivoire','SN'=>'🇸🇳 SN — Sénégal',
-                                'ML'=>'🇲🇱 ML — Mali',          'BF'=>'🇧🇫 BF — Burkina Faso',
-                                'GN'=>'🇬🇳 GN — Guinée',        'TG'=>'🇹🇬 TG — Togo',
-                                'BJ'=>'🇧🇯 BJ — Bénin',         'CM'=>'🇨🇲 CM — Cameroun',
-                                'GH'=>'🇬🇭 GH — Ghana',         'NG'=>'🇳🇬 NG — Nigeria',
-                                'MA'=>'🇲🇦 MA — Maroc',         'FR'=>'🇫🇷 FR — France',
+                                'CI'=>'🇨🇮 Côte d\'Ivoire', 'SN'=>'🇸🇳 Sénégal',
+                                'ML'=>'🇲🇱 Mali',           'BF'=>'🇧🇫 Burkina Faso',
+                                'GN'=>'🇬🇳 Guinée',         'TG'=>'🇹🇬 Togo',
+                                'BJ'=>'🇧🇯 Bénin',          'CM'=>'🇨🇲 Cameroun',
+                                'GH'=>'🇬🇭 Ghana',          'NG'=>'🇳🇬 Nigeria',
+                                'MA'=>'🇲🇦 Maroc',          'FR'=>'🇫🇷 France',
                             ] as $code => $lbl)
                             @php $checked = in_array($code, old('countries', ['CI'])); @endphp
-                            <label class="country-label" style="display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border:1.5px solid {{ $checked ? 'var(--color-primary)' : 'var(--color-border)' }}; border-radius:.5rem; cursor:pointer; font-size:.8125rem; transition:all .15s; background:{{ $checked ? 'var(--color-primary-light)' : '#fff' }}; color:{{ $checked ? 'var(--color-primary)' : '#374151' }}; font-weight:{{ $checked ? '600' : '400' }};">
+                            <label style="display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem;
+                                          border:1.5px solid {{ $checked ? 'var(--color-primary)' : 'var(--color-border)' }};
+                                          border-radius:.5rem; cursor:pointer; font-size:.8125rem; transition:all .15s;
+                                          background:{{ $checked ? 'var(--color-primary-light)' : '#fff' }};
+                                          color:{{ $checked ? 'var(--color-primary)' : '#374151' }};
+                                          font-weight:{{ $checked ? '600' : '400' }};">
                                 <input type="checkbox" name="countries[]" value="{{ $code }}"
                                        style="accent-color:var(--color-primary); flex-shrink:0;"
                                        {{ $checked ? 'checked' : '' }}
@@ -237,12 +199,8 @@
                         @error('countries')<div class="invalid-feedback" style="display:block; margin-top:.375rem;">{{ $message }}</div>@enderror
                     </div>
 
-                    {{-- Centres d'intérêt --}}
                     <div style="grid-column:1/-1;">
-                        <label class="form-label">
-                            Centres d'intérêt
-
-                        </label>
+                        <label class="form-label">Centres d'intérêt</label>
                         @php
                             $defaultInterestIds = ['6003279598823','6003127206524','6003389760112'];
                             $oldInterestIds = old('interests_value')
@@ -253,11 +211,11 @@
                                value="{{ old('interests_value', json_encode(array_map(fn($id)=>['id'=>$id], $defaultInterestIds))) }}">
                         <div style="display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.375rem;">
                             @foreach([
-                                '6003279598823'=>'Marketing',      '6003127206524'=>'Digital Marketing',
-                                '6003389760112'=>'Social Media',   '6003232518619'=>'Advertising',
-                                '6003139057932'=>'Entrepreneurship','6002990402487'=>'Automobile',
-                                '6003107902433'=>'Business',       '6002925729260'=>'Technology',
-                                '6003330421807'=>'Video',          '6003008043877'=>'E-commerce',
+                                '6003279598823'=>'Marketing',       '6003127206524'=>'Digital Marketing',
+                                '6003389760112'=>'Social Media',    '6003232518619'=>'Publicité',
+                                '6003139057932'=>'Entrepreneuriat', '6002990402487'=>'Automobile',
+                                '6003107902433'=>'Business',        '6002925729260'=>'Technologie',
+                                '6003330421807'=>'Vidéo',           '6003008043877'=>'E-commerce',
                             ] as $iid => $iname)
                             @php $sel = in_array($iid, $oldInterestIds); @endphp
                             <span onclick="toggleInterest(this,'{{ $iid }}')" data-id="{{ $iid }}"
@@ -272,61 +230,35 @@
                         </div>
                     </div>
 
-                    {{-- Optimization goal --}}
                     <div>
-                        <label class="form-label">
-                            Optimization Goal
-
-                        </label>
+                        <label class="form-label">Optimiser pour</label>
                         <select name="optimization_goal" class="form-control">
-                            @foreach([
-                                'LINK_CLICKS'        => 'LINK_CLICKS — Clics lien (défaut)',
-                                'IMPRESSIONS'        => 'IMPRESSIONS — Impressions',
-                                'REACH'              => 'REACH — Portée',
-                                'LANDING_PAGE_VIEWS' => 'LANDING_PAGE_VIEWS — Vues page',
-                                'VIDEO_VIEWS'        => 'VIDEO_VIEWS — Vues vidéo',
-                                'POST_ENGAGEMENT'    => 'POST_ENGAGEMENT — Engagement',
-                            ] as $val => $lbl)
-                            <option value="{{ $val }}" {{ old('optimization_goal','LINK_CLICKS') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
-                            @endforeach
+                            <option value="LINK_CLICKS"        {{ old('optimization_goal','LINK_CLICKS') === 'LINK_CLICKS'        ? 'selected' : '' }}>Clics sur le lien (recommandé)</option>
+                            <option value="IMPRESSIONS"        {{ old('optimization_goal','LINK_CLICKS') === 'IMPRESSIONS'        ? 'selected' : '' }}>Nombre d'affichages</option>
+                            <option value="REACH"              {{ old('optimization_goal','LINK_CLICKS') === 'REACH'              ? 'selected' : '' }}>Portée maximale</option>
+                            <option value="LANDING_PAGE_VIEWS" {{ old('optimization_goal','LINK_CLICKS') === 'LANDING_PAGE_VIEWS' ? 'selected' : '' }}>Vues de la page de destination</option>
+                            <option value="VIDEO_VIEWS"        {{ old('optimization_goal','LINK_CLICKS') === 'VIDEO_VIEWS'        ? 'selected' : '' }}>Vues de la vidéo</option>
+                            <option value="POST_ENGAGEMENT"    {{ old('optimization_goal','LINK_CLICKS') === 'POST_ENGAGEMENT'    ? 'selected' : '' }}>Interactions avec le post</option>
                         </select>
-                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Doit être compatible avec l'objectif de campagne</p>
                     </div>
 
-                    {{-- Billing event --}}
                     <div>
-                        <label class="form-label">
-                            Billing Event
-
-                        </label>
+                        <label class="form-label">Mode de facturation</label>
                         <select name="billing_event" class="form-control">
-                            @foreach([
-                                'IMPRESSIONS'     => 'IMPRESSIONS — Paiement aux impressions (défaut)',
-                                'LINK_CLICKS'     => 'LINK_CLICKS — Paiement aux clics',
-                                'POST_ENGAGEMENT' => 'POST_ENGAGEMENT — Paiement à l\'engagement',
-                                'VIDEO_VIEWS'     => 'VIDEO_VIEWS — Paiement aux vues',
-                            ] as $val => $lbl)
-                            <option value="{{ $val }}" {{ old('billing_event','IMPRESSIONS') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
-                            @endforeach
+                            <option value="IMPRESSIONS"     {{ old('billing_event','IMPRESSIONS') === 'IMPRESSIONS'     ? 'selected' : '' }}>À chaque affichage (recommandé)</option>
+                            <option value="LINK_CLICKS"     {{ old('billing_event','IMPRESSIONS') === 'LINK_CLICKS'     ? 'selected' : '' }}>À chaque clic sur le lien</option>
+                            <option value="POST_ENGAGEMENT" {{ old('billing_event','IMPRESSIONS') === 'POST_ENGAGEMENT' ? 'selected' : '' }}>À chaque interaction avec le post</option>
+                            <option value="VIDEO_VIEWS"     {{ old('billing_event','IMPRESSIONS') === 'VIDEO_VIEWS'     ? 'selected' : '' }}>À chaque vue de la vidéo</option>
                         </select>
                     </div>
 
-                    {{-- Bid strategy --}}
                     <div style="grid-column:1/-1;">
-                        <label class="form-label">
-                            Stratégie d'enchères
-
-                        </label>
+                        <label class="form-label">Stratégie de coût</label>
                         <select name="bid_strategy" class="form-control">
-                            @foreach([
-                                'LOWEST_COST_WITHOUT_CAP'  => 'LOWEST_COST_WITHOUT_CAP — Coût le plus bas automatique (défaut)',
-                                'LOWEST_COST_WITH_BID_CAP' => 'LOWEST_COST_WITH_BID_CAP — Coût le plus bas avec plafond',
-                                'COST_CAP'                 => 'COST_CAP — Plafond de coût cible',
-                            ] as $val => $lbl)
-                            <option value="{{ $val }}" {{ old('bid_strategy','LOWEST_COST_WITHOUT_CAP') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
-                            @endforeach
+                            <option value="LOWEST_COST_WITHOUT_CAP"  {{ old('bid_strategy','LOWEST_COST_WITHOUT_CAP') === 'LOWEST_COST_WITHOUT_CAP'  ? 'selected' : '' }}>Coût minimum automatique (recommandé)</option>
+                            <option value="LOWEST_COST_WITH_BID_CAP" {{ old('bid_strategy','LOWEST_COST_WITHOUT_CAP') === 'LOWEST_COST_WITH_BID_CAP' ? 'selected' : '' }}>Coût minimum avec plafond d'enchère</option>
+                            <option value="COST_CAP"                 {{ old('bid_strategy','LOWEST_COST_WITHOUT_CAP') === 'COST_CAP'                 ? 'selected' : '' }}>Plafond de coût cible fixe</option>
                         </select>
-                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">LOWEST_COST_WITHOUT_CAP → Meta optimise automatiquement sans limite d'enchère</p>
                     </div>
 
                 </div>
@@ -334,39 +266,33 @@
         </div>
 
         {{-- ════════════════════════════════
-             SECTION 3 — AD
+             SECTION 3 — ANNONCE
         ════════════════════════════════ --}}
         <div class="card" style="margin-bottom:1.25rem;">
             <div class="card-header">
                 <div style="display:flex; align-items:center; gap:0.625rem;">
                     <i class="fas fa-image" style="color:var(--color-primary);"></i>
                     <div>
-                        <div>Ad — Création publicitaire</div>
-                        <div style="font-size:.75rem; font-weight:400; color:var(--color-muted);">Niveau 3 · Le post Facebook qui sera boosté</div>
+                        <div>Annonce</div>
+                        <div style="font-size:.75rem; font-weight:400; color:var(--color-muted);">Le post Facebook que vous souhaitez mettre en avant</div>
                     </div>
                 </div>
             </div>
             <div class="card-body">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
 
-                    {{-- Nom Ad --}}
                     <div style="grid-column:1/-1;">
-                        <label class="form-label">Nom de l'Ad <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label">Nom de l'annonce <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="ad_name" class="form-control"
                                value="{{ $defaultAdName }}"
                                style="{{ $errors->has('ad_name') ? 'border-color:#ef4444;' : '' }}">
                         @error('ad_name')<div class="invalid-feedback" style="display:block;">{{ $message }}</div>@enderror
                     </div>
 
-                    {{-- Post à booster --}}
                     <div style="grid-column:1/-1;">
-                        <label class="form-label">
-                            Post Facebook à booster <span style="color:#ef4444;">*</span>
-
-                        </label>
+                        <label class="form-label">Post Facebook à booster <span style="color:#ef4444;">*</span></label>
 
                         @if($post)
-                        {{-- Post pré-sélectionné via ?post_id= --}}
                         <input type="hidden" name="post_id" value="{{ $post->post_id }}">
                         <div style="display:flex; gap:1rem; align-items:flex-start; padding:.875rem 1rem; border:1.5px solid var(--color-border); border-radius:.625rem; background:#f8fafc;">
                             @if($post->thumbnail_url)
@@ -388,30 +314,24 @@
                                 <i class="fas fa-exchange-alt"></i> Changer
                             </a>
                         </div>
-
                         @else
-                        {{-- Saisie manuelle --}}
                         <input type="text" name="post_id" class="form-control"
                                value="{{ old('post_id') }}"
                                placeholder="ex: 668925849823227_1234567890123"
                                style="{{ $errors->has('post_id') ? 'border-color:#ef4444;' : '' }}">
-                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Format : PAGE_ID_POST_ID · Retrouvable dans l'URL du post ou via Meta Graph API Explorer.
-                            Ou <a href="{{ route('posts.index') }}" style="color:var(--color-primary);">sélectionner depuis la liste des posts</a>.</p>
+                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">
+                            Format : PAGE_ID_POST_ID · Ou <a href="{{ route('posts.index') }}" style="color:var(--color-primary);">sélectionner depuis la liste des posts</a>
+                        </p>
                         @error('post_id')<div class="invalid-feedback" style="display:block;">{{ $message }}</div>@enderror
                         @endif
                     </div>
 
-                    {{-- Statut Ad --}}
                     <div>
-                        <label class="form-label">
-                            Statut de l'Ad
-
-                        </label>
+                        <label class="form-label">Statut de l'annonce</label>
                         <select name="ad_status" class="form-control">
-                            <option value="PAUSED" {{ old('ad_status','PAUSED') === 'PAUSED' ? 'selected' : '' }}>PAUSED — En pause (recommandé)</option>
-                            <option value="ACTIVE" {{ old('ad_status','PAUSED') === 'ACTIVE' ? 'selected' : '' }}>ACTIVE — Active dès création</option>
+                            <option value="PAUSED" {{ old('ad_status','PAUSED') === 'PAUSED' ? 'selected' : '' }}>En pause (recommandé)</option>
+                            <option value="ACTIVE" {{ old('ad_status','PAUSED') === 'ACTIVE' ? 'selected' : '' }}>Active dès création</option>
                         </select>
-                        <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Synchronisé avec le statut campagne/adset</p>
                     </div>
 
                 </div>
@@ -419,7 +339,7 @@
         </div>
 
         {{-- ════════════════════════════════
-             BARRE RÉCAPITULATIVE + SUBMIT
+             RÉCAP + BOUTON
         ════════════════════════════════ --}}
         <div class="card" style="border-color:var(--color-primary);">
             <div class="card-body" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
@@ -434,11 +354,11 @@
                     </div>
                     <div>
                         <div style="font-size:.6875rem; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted);">Objectif</div>
-                        <div style="font-size:1.125rem; font-weight:800; color:var(--color-primary);" id="s_objective">TRAFFIC</div>
+                        <div style="font-size:1.125rem; font-weight:800; color:var(--color-primary);" id="s_objective">Trafic</div>
                     </div>
                     <div>
                         <div style="font-size:.6875rem; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted);">Statut</div>
-                        <div style="font-size:1.125rem; font-weight:800; color:var(--color-primary);" id="s_status">PAUSED</div>
+                        <div style="font-size:1.125rem; font-weight:800; color:var(--color-primary);" id="s_status">En pause</div>
                     </div>
                 </div>
                 <div style="display:flex; gap:.75rem; align-items:center;">
@@ -446,7 +366,7 @@
                         <i class="fas fa-arrow-left"></i> Retour
                     </a>
                     <button type="submit" class="btn-primary" id="submitBtn">
-                        <i class="fas fa-rocket"></i> Enregistrer &amp; Envoyer
+                        <i class="fas fa-save"></i> Enregistrer la campagne
                     </button>
                 </div>
             </div>
@@ -459,7 +379,6 @@
 
 @push('scripts')
 <script>
-// ─── BUDGET PILLS ───────────────────────────────
 var currentBudget = {{ old('budget_value', 7000) }};
 
 function selectBudget(val, fromCustom) {
@@ -477,7 +396,6 @@ function selectBudget(val, fromCustom) {
     updateSummary();
 }
 
-// ─── INTERESTS CHIPS ───────────────────────────
 var selInterests = {!! json_encode(
     old('interests_value')
         ? collect(json_decode(old('interests_value'), true) ?? [])->pluck('id')->toArray()
@@ -496,7 +414,6 @@ function toggleInterest(el, id) {
         JSON.stringify(selInterests.map(function(i) { return {id: i}; }));
 }
 
-// ─── COUNTRY CHECKBOXES ─────────────────────────
 function styleCountry(cb) {
     var lbl = cb.closest('label');
     if (!lbl) return;
@@ -509,22 +426,26 @@ document.querySelectorAll('#countriesGrid input[type=checkbox]').forEach(functio
     cb.addEventListener('change', function() { styleCountry(this); });
 });
 
-// ─── BUDGET TYPE HINT ───────────────────────────
 function updateBudgetHint() {
     var type = document.getElementById('sel_budget_type').value;
     document.getElementById('budget_type_hint').textContent = type === 'lifetime_budget'
-        ? 'Le budget total est réparti automatiquement sur la durée choisie'
+        ? 'Le montant sera réparti automatiquement sur toute la durée'
         : 'Ce montant est dépensé chaque jour — total = budget × durée';
 }
 
-// ─── SUMMARY BAR ────────────────────────────────
+var objLabels = {
+    'OUTCOME_TRAFFIC': 'Trafic', 'OUTCOME_AWARENESS': 'Notoriété',
+    'OUTCOME_ENGAGEMENT': 'Engagement', 'OUTCOME_LEADS': 'Prospects',
+    'OUTCOME_SALES': 'Ventes', 'OUTCOME_APP_PROMOTION': 'Application'
+};
+
 function updateSummary() {
     var budget   = parseInt(document.getElementById('budget_value').value) || 0;
     var duration = parseInt(document.getElementById('sel_duration').value) || 7;
     var objSel   = document.getElementById('sel_objective');
     var stSel    = document.getElementById('sel_status');
-    var obj      = objSel ? objSel.value.replace('OUTCOME_', '') : 'TRAFFIC';
-    var st       = stSel  ? stSel.value : 'PAUSED';
+    var obj      = objSel ? (objLabels[objSel.value] || objSel.value.replace('OUTCOME_','')) : 'Trafic';
+    var st       = stSel  ? (stSel.value === 'PAUSED' ? 'En pause' : 'Active') : 'En pause';
 
     document.getElementById('s_budget').textContent   = new Intl.NumberFormat('fr-FR').format(budget) + ' FCFA';
     document.getElementById('s_duration').textContent = duration + ' jour' + (duration > 1 ? 's' : '');
@@ -532,14 +453,12 @@ function updateSummary() {
     document.getElementById('s_status').textContent   = st;
 }
 
-// ─── SUBMIT FEEDBACK ────────────────────────────
 document.getElementById('boostForm').addEventListener('submit', function() {
     var btn = document.getElementById('submitBtn');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours…';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement…';
 });
 
-// Init
 updateSummary();
 </script>
 @endpush

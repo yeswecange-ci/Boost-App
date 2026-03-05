@@ -35,12 +35,13 @@ class CampaignController extends Controller
 
         $campaigns = $query->paginate(15)->withQueryString();
 
+        $base = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id));
         $counts = [
-            'all'     => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id))->count(),
-            'pending' => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id))->where('execution_status', 'pending')->count(),
-            'running' => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id))->where('execution_status', 'running')->count(),
-            'done'    => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id))->where('execution_status', 'done')->count(),
-            'error'   => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id))->where('execution_status', 'error')->count(),
+            'all'     => $base()->count(),
+            'draft'   => $base()->where('execution_status', 'draft')->count(),
+            'running' => $base()->where('execution_status', 'running')->count(),
+            'done'    => $base()->where('execution_status', 'done')->count(),
+            'error'   => $base()->where('execution_status', 'error')->count(),
         ];
 
         return view('campaigns.index', compact('campaigns', 'counts', 'isValidator'));
@@ -115,13 +116,24 @@ class CampaignController extends Controller
             'bid_strategy'          => $request->bid_strategy,
             'ad_name'               => $request->ad_name,
             'ad_status'             => $request->ad_status,
-            'execution_status'      => 'pending',
+            'execution_status'      => 'draft',
         ]);
+
+        return redirect()->route('campaigns.show', $campaign->id)
+            ->with('success', 'Campagne enregistrée ! Cliquez sur "Booster" pour la lancer.');
+    }
+
+    public function launch(BoostCampaign $campaign)
+    {
+        if (!in_array($campaign->execution_status, ['draft', 'error'])) {
+            return redirect()->route('campaigns.show', $campaign->id)
+                ->with('error', 'Cette campagne ne peut pas être (re)lancée dans son état actuel.');
+        }
 
         $this->triggerN8n($campaign);
 
         return redirect()->route('campaigns.show', $campaign->id)
-            ->with('success', 'Campagne enregistrée et envoyée à n8n !');
+            ->with('success', 'Boost lancé ! n8n va créer la campagne sur Meta Ads.');
     }
 
     public function show(BoostCampaign $campaign)

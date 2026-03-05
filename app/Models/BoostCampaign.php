@@ -47,6 +47,7 @@ class BoostCampaign extends Model
     public function getStatusLabelAttribute(): string
     {
         return match($this->execution_status) {
+            'draft'   => 'Brouillon',
             'pending' => 'En attente',
             'running' => 'En cours…',
             'done'    => 'Créée',
@@ -58,6 +59,7 @@ class BoostCampaign extends Model
     public function getStatusClassAttribute(): string
     {
         return match($this->execution_status) {
+            'draft'   => 'badge-status-draft',
             'pending' => 'badge-status-pending',
             'running' => 'badge-status-pending',
             'done'    => 'badge-status-active',
