@@ -71,6 +71,12 @@
             Mes boosts
         </a>
 
+        <a href="{{ route('campaigns.index') }}"
+           class="sidebar-item {{ request()->routeIs('campaigns.*') ? 'active' : '' }}">
+            <span class="icon"><i class="fas fa-layer-group"></i></span>
+            Campagnes Media Buyer
+        </a>
+
         @if(auth()->user()->hasRole(['admin']))
         <div style="font-size: 0.6875rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 0.5rem; margin: 1rem 0 0.5rem;">
             Administration

@@ -9,6 +9,7 @@ use App\Http\Controllers\SyncRunController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CampaignController;
 
 Route::get('/', fn() => redirect()->route('login'));
 
@@ -16,8 +17,9 @@ Auth::routes();
 
 // ─── Webhooks N8N (sans authentification, sans CSRF) ─────────
 Route::prefix('webhook/n8n')->name('webhook.n8n.')->group(function () {
-    Route::post('/boost-created',   [WebhookController::class, 'boostCreated'])->name('boost-created');
-    Route::post('/boost-activated', [WebhookController::class, 'boostActivated'])->name('boost-activated');
+    Route::post('/boost-created',    [WebhookController::class, 'boostCreated'])->name('boost-created');
+    Route::post('/boost-activated',  [WebhookController::class, 'boostActivated'])->name('boost-activated');
+    Route::post('/campaign-done',    [CampaignController::class, 'n8nCallback'])->name('campaign-done');
 });
 
 // ─── Routes authentifiées ────────────────────────────────────
@@ -36,6 +38,14 @@ Route::middleware(['auth'])->group(function () {
 
     // Posts
     Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
+
+    // ─── Campaigns Media Buyer ────────────────────────────────
+    Route::get('/campaigns',        [CampaignController::class, 'index'])->name('campaigns.index');
+    Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
+    Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
+    Route::middleware(['role:operator,admin'])->group(function () {
+        Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+    });
 
     // ─── Boost — Opérateur (operator + admin uniquement) ─────
     Route::middleware(['role:operator,admin'])->group(function () {
