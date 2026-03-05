@@ -65,27 +65,29 @@
             Posts Facebook
         </a>
 
+        @if(auth()->user()->hasRole(['operator','admin']))
         <a href="{{ route('boost.my-requests') }}"
            class="sidebar-item {{ request()->routeIs('boost.my-requests') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-rocket"></i></span>
             Mes boosts
         </a>
+        @endif
 
         <a href="{{ route('campaigns.index') }}"
            class="sidebar-item {{ request()->routeIs('campaigns.*') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-layer-group"></i></span>
             Campagnes Media
             @php
-                $campPendingCount = \Illuminate\Support\Facades\Cache::remember('sidebar_camp_pending', 60, function() {
-                    $u = auth()->user();
-                    if ($u->hasRole('admin')) {
-                        return \App\Models\BoostCampaign::whereIn('execution_status', ['pending_n1','pending_n2'])->count();
-                    } elseif ($u->hasRole('validator_n2')) {
-                        return \App\Models\BoostCampaign::where('execution_status', 'pending_n2')->count();
-                    } else {
-                        return \App\Models\BoostCampaign::where('execution_status', 'pending_n1')->count();
-                    }
-                });
+                $_cu = auth()->user();
+                if ($_cu->hasRole('admin')) {
+                    $campPendingCount = \App\Models\BoostCampaign::whereIn('execution_status', ['pending_n1','pending_n2'])->count();
+                } elseif ($_cu->hasRole('validator_n2')) {
+                    $campPendingCount = \App\Models\BoostCampaign::where('execution_status', 'pending_n2')->count();
+                } elseif ($_cu->hasRole(['validator_n1','validator'])) {
+                    $campPendingCount = \App\Models\BoostCampaign::where('execution_status', 'pending_n1')->count();
+                } else {
+                    $campPendingCount = 0;
+                }
             @endphp
             @if($campPendingCount > 0 && auth()->user()->hasRole(['validator_n1','validator_n2','validator','admin']))
             <span style="margin-left:auto; background:#f59e0b; color:#fff; font-size:.6875rem; font-weight:700; padding:.125rem .5rem; border-radius:9999px;">
@@ -153,10 +155,23 @@
         @endif
 
         @if(auth()->user()->hasRole(['validator_n1', 'validator', 'validator_n2', 'admin']))
+        <a href="{{ route('campaigns.pending') }}"
+           class="sidebar-item {{ request()->routeIs('campaigns.pending') ? 'active' : '' }}">
+            <span class="icon"><i class="fas fa-layer-group"></i></span>
+            File campagnes
+            @if($campPendingCount > 0)
+            <span style="margin-left:auto; background:#f59e0b; color:#fff; font-size:.6875rem; font-weight:700; padding:.125rem .5rem; border-radius:9999px;">
+                {{ $campPendingCount }}
+            </span>
+            @endif
+        </a>
+        @endif
+
+        @if(auth()->user()->hasRole(['validator_n1', 'validator', 'validator_n2', 'admin']))
         <a href="{{ route('boost.all') }}"
            class="sidebar-item {{ request()->routeIs('boost.all') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-list"></i></span>
-            Historique
+            Historique boosts
         </a>
         @endif
 

@@ -1,7 +1,16 @@
 @extends('layouts.app')
 
 @section('page-title', 'Dashboard')
-@section('page-subtitle', 'Vue d\'ensemble de vos activités de boost')
+@php
+    $_role = auth()->user()->roles->first()?->name ?? '';
+    $_subtitle = match(true) {
+        in_array($_role, ['validator_n1','validator']) => 'Files de validation — Boosts & Campagnes',
+        $_role === 'validator_n2'                      => 'Validation finale N+2 — Boosts & Campagnes',
+        $_role === 'admin'                             => 'Vue administrative globale',
+        default                                        => 'Vue d\'ensemble de vos activités',
+    };
+@endphp
+@section('page-subtitle', $_subtitle)
 
 @section('content')
 
@@ -116,6 +125,106 @@
             </div>
 
         </div>
+    </div>
+</div>
+@endif
+
+{{-- Section Campagnes Media Buyer --}}
+@if($campaignCounts['total'] > 0 || $isValidator)
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:.5rem;">
+            <i class="fas fa-layer-group" style="color:var(--color-primary);"></i>
+            Campagnes Media Buyer
+        </div>
+        <a href="{{ route('campaigns.index') }}" class="btn-secondary btn-sm">
+            <i class="fas fa-arrow-right"></i> Voir tout
+        </a>
+    </div>
+    <div class="card-body">
+
+        @if($isValidator)
+        {{-- Validateurs : files d'attente avec CTAs --}}
+        <div style="display:flex; flex-wrap:wrap; gap:1rem;">
+            @if($isN1 && $campaignCounts['pending_n1'] > 0)
+            <a href="{{ route('campaigns.pending') }}"
+               style="display:flex; align-items:center; gap:.875rem; padding:1rem 1.25rem; background:#fef9c3; border:1.5px solid #fde68a; border-radius:.625rem; text-decoration:none; flex:1; min-width:180px;">
+                <i class="fas fa-clock" style="font-size:1.5rem; color:#92400e;"></i>
+                <div>
+                    <div style="font-size:1.5rem; font-weight:800; color:#92400e; line-height:1;">{{ $campaignCounts['pending_n1'] }}</div>
+                    <div style="font-size:.75rem; color:#92400e; font-weight:500; margin-top:.125rem;">Campagne(s) — validation N+1</div>
+                </div>
+                <i class="fas fa-arrow-right" style="margin-left:auto; color:#92400e; font-size:.875rem;"></i>
+            </a>
+            @endif
+
+            @if($isN2 && $campaignCounts['pending_n2'] > 0)
+            <a href="{{ route('campaigns.pending') }}"
+               style="display:flex; align-items:center; gap:.875rem; padding:1rem 1.25rem; background:#dbeafe; border:1.5px solid #93c5fd; border-radius:.625rem; text-decoration:none; flex:1; min-width:180px;">
+                <i class="fas fa-check-circle" style="font-size:1.5rem; color:#1d4ed8;"></i>
+                <div>
+                    <div style="font-size:1.5rem; font-weight:800; color:#1d4ed8; line-height:1;">{{ $campaignCounts['pending_n2'] }}</div>
+                    <div style="font-size:.75rem; color:#1d4ed8; font-weight:500; margin-top:.125rem;">Campagne(s) — validation N+2</div>
+                </div>
+                <i class="fas fa-arrow-right" style="margin-left:auto; color:#1d4ed8; font-size:.875rem;"></i>
+            </a>
+            @endif
+
+            @if((!$isN1 || $campaignCounts['pending_n1'] === 0) && (!$isN2 || $campaignCounts['pending_n2'] === 0))
+            <div style="display:flex; align-items:center; gap:.625rem; color:var(--color-muted); font-size:.875rem; padding:.5rem 0;">
+                <i class="fas fa-check-circle" style="color:#86efac; font-size:1.25rem;"></i>
+                Aucune campagne en attente de validation.
+            </div>
+            @endif
+
+            {{-- Aperçu global pour admin --}}
+            @if($isN1 && $isN2 && $campaignCounts['total'] > 0)
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:.5rem; width:100%; margin-top:.25rem;">
+                @foreach([
+                    ['label'=>'Total',    'val'=>$campaignCounts['total'], 'color'=>'#4f46e5'],
+                    ['label'=>'Boostées', 'val'=>$campaignCounts['done'],  'color'=>'#15803d'],
+                    ['label'=>'Erreurs',  'val'=>$campaignCounts['error'], 'color'=>'#b91c1c'],
+                ] as $s)
+                <div style="text-align:center; padding:.5rem; background:#f8fafc; border-radius:.5rem;">
+                    <div style="font-size:1.25rem; font-weight:700; color:{{ $s['color'] }};">{{ $s['val'] }}</div>
+                    <div style="font-size:.6875rem; color:var(--color-muted);">{{ $s['label'] }}</div>
+                </div>
+                @endforeach
+            </div>
+            @endif
+        </div>
+
+        @else
+        {{-- Opérateurs : progression de leurs campagnes --}}
+        @if($campaignCounts['total'] === 0)
+        <div style="text-align:center; padding:1.5rem 1rem; color:var(--color-muted);">
+            <i class="fas fa-layer-group" style="font-size:2rem; color:#e2e8f0; display:block; margin-bottom:.75rem;"></i>
+            <div style="font-size:.875rem;">Aucune campagne créée. <a href="{{ route('campaigns.create') }}" style="color:var(--color-primary); font-weight:500;">Créer maintenant</a></div>
+        </div>
+        @else
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:.75rem;">
+            @foreach([
+                ['label'=>'Total',          'val'=>$campaignCounts['total'],                                      'color'=>'#4f46e5', 'bg'=>'#eef2ff'],
+                ['label'=>'Brouillons',     'val'=>$campaignCounts['draft'],                                      'color'=>'#64748b', 'bg'=>'#f1f5f9'],
+                ['label'=>'En validation',  'val'=>$campaignCounts['pending_n1']+$campaignCounts['pending_n2'],   'color'=>'#854d0e', 'bg'=>'#fef9c3'],
+                ['label'=>'Approuvées',     'val'=>$campaignCounts['approved'],                                   'color'=>'#0369a1', 'bg'=>'#e0f2fe'],
+                ['label'=>'Boostées',       'val'=>$campaignCounts['done'],                                       'color'=>'#15803d', 'bg'=>'#dcfce7'],
+                ['label'=>'Erreurs',        'val'=>$campaignCounts['error'],                                      'color'=>'#b91c1c', 'bg'=>'#fee2e2'],
+            ] as $s)
+            <div style="background:{{ $s['bg'] }}; border-radius:.5rem; padding:.625rem .75rem; text-align:center;">
+                <div style="font-size:1.375rem; font-weight:700; color:{{ $s['color'] }};">{{ $s['val'] }}</div>
+                <div style="font-size:.6875rem; color:#64748b; margin-top:.125rem; white-space:nowrap;">{{ $s['label'] }}</div>
+            </div>
+            @endforeach
+        </div>
+        <div style="margin-top:.875rem; text-align:right;">
+            <a href="{{ route('campaigns.create') }}" class="btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Nouvelle campagne
+            </a>
+        </div>
+        @endif
+        @endif
+
     </div>
 </div>
 @endif

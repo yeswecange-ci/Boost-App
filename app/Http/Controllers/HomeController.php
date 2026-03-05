@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BoostCampaign;
 use App\Models\BoostRequest;
 use App\Models\FacebookPost;
 use App\Models\SyncRun;
@@ -51,15 +52,30 @@ class HomeController extends Controller
               })->count()
             : 0;
 
+        // Stats Campagnes Media Buyer (filtrées par rôle)
+        $isN1 = $user->hasRole(['validator_n1', 'validator', 'admin']);
+        $isN2 = $user->hasRole(['validator_n2', 'admin']);
+        $campBase = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id));
+        $campaignCounts = [
+            'total'      => $campBase()->count(),
+            'draft'      => $campBase()->where('execution_status', 'draft')->count(),
+            'pending_n1' => $campBase()->where('execution_status', 'pending_n1')->count(),
+            'pending_n2' => $campBase()->where('execution_status', 'pending_n2')->count(),
+            'approved'   => $campBase()->where('execution_status', 'approved')->count(),
+            'done'       => $campBase()->where('execution_status', 'done')->count(),
+            'error'      => $campBase()->whereIn('execution_status', ['error', 'rejected'])->count(),
+        ];
+
         return view('home', compact(
-            'isValidator',
+            'isValidator', 'isN1', 'isN2',
             'totalBoosts',
             'pendingCount',
             'activeCount',
             'budgetByCurrency',
             'recentBoosts',
             'lastSyncRun',
-            'nonBoostableCount'
+            'nonBoostableCount',
+            'campaignCounts'
         ));
     }
 }
