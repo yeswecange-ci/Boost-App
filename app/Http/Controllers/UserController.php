@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FacebookPage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -19,7 +20,7 @@ class UserController extends Controller
             $query->whereHas('roles', fn($q) => $q->where('name', $role));
         }
 
-        $users = $query->paginate(15)->withQueryString();
+        $users = $query->with('facebookPages')->paginate(15)->withQueryString();
 
         return view('users.index', compact('users', 'role'));
     }
@@ -27,18 +28,21 @@ class UserController extends Controller
     public function create()
     {
         $roles = self::ROLES;
-        return view('users.create', compact('roles'));
+        $pages = FacebookPage::where('is_active', true)->orderBy('page_name')->get();
+        return view('users.create', compact('roles', 'pages'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|email|unique:users,email',
-            'password'              => 'required|string|min:8|confirmed',
-            'phone'                 => 'nullable|string|max:20',
-            'role'                  => 'required|in:' . implode(',', self::ROLES),
-            'is_active'             => 'boolean',
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required|string|min:8|confirmed',
+            'phone'     => 'nullable|string|max:20',
+            'role'      => 'required|in:' . implode(',', self::ROLES),
+            'is_active' => 'boolean',
+            'page_ids'  => 'nullable|array',
+            'page_ids.*'=> 'integer|exists:facebook_pages,id',
         ]);
 
         $user = User::create([
@@ -51,6 +55,10 @@ class UserController extends Controller
 
         $user->assignRole($data['role']);
 
+        if ($data['role'] !== 'admin') {
+            $user->facebookPages()->sync($request->input('page_ids', []));
+        }
+
         return redirect()->route('users.index')
                          ->with('success', 'Utilisateur créé avec succès.');
     }
@@ -58,18 +66,22 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = self::ROLES;
-        return view('users.edit', compact('user', 'roles'));
+        $pages = FacebookPage::where('is_active', true)->orderBy('page_name')->get();
+        $user->load('facebookPages');
+        return view('users.edit', compact('user', 'roles', 'pages'));
     }
 
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|email|unique:users,email,' . $user->id,
-            'password'              => 'nullable|string|min:8|confirmed',
-            'phone'                 => 'nullable|string|max:20',
-            'role'                  => 'required|in:' . implode(',', self::ROLES),
-            'is_active'             => 'boolean',
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email,' . $user->id,
+            'password'  => 'nullable|string|min:8|confirmed',
+            'phone'     => 'nullable|string|max:20',
+            'role'      => 'required|in:' . implode(',', self::ROLES),
+            'is_active' => 'boolean',
+            'page_ids'  => 'nullable|array',
+            'page_ids.*'=> 'integer|exists:facebook_pages,id',
         ]);
 
         $user->update([
@@ -84,6 +96,10 @@ class UserController extends Controller
         }
 
         $user->syncRoles([$data['role']]);
+
+        if ($data['role'] !== 'admin') {
+            $user->facebookPages()->sync($request->input('page_ids', []));
+        }
 
         return redirect()->route('users.index')
                          ->with('success', 'Utilisateur mis à jour.');

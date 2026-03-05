@@ -56,6 +56,7 @@ $tabs = [
                     <th>Email</th>
                     <th>Téléphone</th>
                     <th>Rôle</th>
+                    <th>Pages assignées</th>
                     <th>Statut</th>
                     <th>Créé le</th>
                     <th></th>
@@ -98,6 +99,31 @@ $tabs = [
                         ">{{ $roleInfo['label'] }}</span>
                         @else
                         <span style="color:#94a3b8; font-size:0.875rem;">—</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($userRole === 'admin')
+                            <span style="font-size:0.75rem; font-weight:600; color:#4f46e5; background:#eef2ff; padding:0.2rem 0.5rem; border-radius:9999px;">
+                                <i class="fas fa-infinity" style="font-size:0.625rem;"></i> Toutes
+                            </span>
+                        @else
+                            @php $userPages = $user->facebookPages; @endphp
+                            @if($userPages->isEmpty())
+                                <span style="color:#94a3b8; font-size:0.8125rem;">—</span>
+                            @else
+                                <div style="display:flex; flex-wrap:wrap; gap:0.25rem; max-width:220px;">
+                                    @foreach($userPages->take(3) as $pg)
+                                    <span style="font-size:0.6875rem; font-weight:600; color:#1d4ed8; background:#eff6ff; padding:0.15rem 0.45rem; border-radius:9999px; white-space:nowrap; max-width:100px; overflow:hidden; text-overflow:ellipsis; display:inline-block;" title="{{ $pg->page_name }}">
+                                        {{ Str::limit($pg->page_name, 14) }}
+                                    </span>
+                                    @endforeach
+                                    @if($userPages->count() > 3)
+                                    <span style="font-size:0.6875rem; font-weight:600; color:#64748b; background:#f1f5f9; padding:0.15rem 0.45rem; border-radius:9999px;">
+                                        +{{ $userPages->count() - 3 }}
+                                    </span>
+                                    @endif
+                                </div>
+                            @endif
                         @endif
                     </td>
                     <td>
@@ -166,7 +192,7 @@ $tabs = [
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" style="text-align:center; padding:3rem 1rem; color:#94a3b8;">
+                    <td colspan="9" style="text-align:center; padding:3rem 1rem; color:#94a3b8;">
                         <i class="fas fa-users" style="font-size:2rem; color:#e2e8f0; display:block; margin-bottom:0.75rem;"></i>
                         Aucun utilisateur trouvé pour ce filtre.
                     </td>

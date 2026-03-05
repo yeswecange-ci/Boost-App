@@ -5,7 +5,7 @@
 
 @section('content')
 
-<div style="max-width:640px; margin:0 auto;">
+<div style="max-width:640px; margin:0 auto;" x-data="{ role: '{{ old('role') }}' }">
     <div class="card">
         <div class="card-header">
             <i class="fas fa-user-plus" style="color:var(--color-primary);"></i>
@@ -78,6 +78,7 @@
                 <div style="margin-bottom:1.25rem;">
                     <label class="form-label" for="role">Rôle <span style="color:#ef4444;">*</span></label>
                     <select id="role" name="role"
+                            x-model="role"
                             class="form-control @error('role') is-invalid @enderror"
                             required>
                         <option value="">— Choisir un rôle —</option>
@@ -91,6 +92,34 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+
+                {{-- Pages Facebook (masqué pour admin) --}}
+                @if($pages->isNotEmpty())
+                <div x-show="role !== 'admin'" style="margin-bottom:1.25rem;">
+                    <label class="form-label">
+                        Pages Facebook assignées
+                        <span style="color:#94a3b8; font-weight:400;">(optionnel)</span>
+                    </label>
+                    <p style="font-size:0.8125rem; color:#64748b; margin:0 0 0.625rem;">
+                        Cochez les pages que cet utilisateur pourra voir et gérer.
+                    </p>
+                    <div style="border:1px solid var(--color-border); border-radius:0.5rem; max-height:200px; overflow-y:auto; padding:0.25rem 0;">
+                        @foreach($pages as $page)
+                        @php $checked = in_array($page->id, (array) old('page_ids', [])); @endphp
+                        <label style="display:flex; align-items:center; gap:0.625rem; padding:0.5rem 0.875rem; cursor:pointer; transition:background .1s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+                            <input type="checkbox" name="page_ids[]" value="{{ $page->id }}"
+                                   {{ $checked ? 'checked' : '' }}
+                                   style="width:15px; height:15px; accent-color:var(--color-primary); cursor:pointer; flex-shrink:0;">
+                            <i class="fab fa-facebook-square" style="color:#1877f2; font-size:1rem; flex-shrink:0;"></i>
+                            <span style="font-size:0.875rem; color:#0f172a;">{{ $page->page_name }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                    @error('page_ids')
+                    <div class="invalid-feedback" style="display:block;">{{ $message }}</div>
+                    @enderror
+                </div>
+                @endif
 
                 {{-- Compte actif --}}
                 <div style="margin-bottom:1.75rem;">
