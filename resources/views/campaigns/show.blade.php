@@ -118,11 +118,12 @@
     </div>
 
     @php
-        $user        = auth()->user();
-        $isValidator = $user->hasRole(['validator_n1','validator_n2','validator','admin']);
-        $isOperator  = $user->hasRole(['operator','admin']);
-        $isAdmin     = $user->hasRole('admin');
-        $status      = $campaign->execution_status;
+        $user      = auth()->user();
+        $isAdmin   = $user->hasRole('admin');
+        $isOp      = $user->hasRole(['operator','admin']);
+        $isN1      = $user->hasRole(['validator_n1','validator','admin']);
+        $isN2      = $user->hasRole(['validator_n2','admin']);
+        $status    = $campaign->execution_status;
     @endphp
 
     {{-- Motif de rejet --}}
@@ -133,16 +134,50 @@
     </div>
     @endif
 
+    {{-- Progression de validation --}}
+    @if(in_array($status, ['pending_n1','pending_n2','approved']))
+    <div class="card">
+        <div class="card-body" style="padding:.875rem 1.25rem;">
+            <div style="display:flex; align-items:center; gap:0; font-size:.8125rem;">
+                @foreach([
+                    ['label'=>'Soumis',     'done'=> true],
+                    ['label'=>'Validé N+1', 'done'=> in_array($status,['pending_n2','approved'])],
+                    ['label'=>'Validé N+2', 'done'=> $status === 'approved'],
+                    ['label'=>'Boosté',     'done'=> false],
+                ] as $i => $step)
+                <div style="display:flex; align-items:center; flex:1; min-width:0;">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:.25rem; flex-shrink:0;">
+                        <div style="width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700;
+                                    background:{{ $step['done'] ? 'var(--color-primary)' : '#e2e8f0' }};
+                                    color:{{ $step['done'] ? '#fff' : '#94a3b8' }};">
+                            @if($step['done'])<i class="fas fa-check"></i>@else{{ $i+1 }}@endif
+                        </div>
+                        <div style="font-size:.6875rem; color:{{ $step['done'] ? 'var(--color-primary)' : 'var(--color-muted)' }}; font-weight:{{ $step['done'] ? '600' : '400' }}; white-space:nowrap;">
+                            {{ $step['label'] }}
+                        </div>
+                    </div>
+                    @if($i < 3)
+                    <div style="flex:1; height:2px; background:{{ $step['done'] ? 'var(--color-primary)' : '#e2e8f0' }}; margin:0 .25rem; align-self:flex-start; margin-top:13px;"></div>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Barre d'actions --}}
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;"
+         x-data="{ rejectOpen: false, reason: '' }">
+
         <a href="{{ route('campaigns.index') }}" class="btn-secondary">
             <i class="fas fa-arrow-left"></i> Retour aux campagnes
         </a>
 
-        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;" x-data="{ rejectOpen: false, reason: '' }">
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
 
-            {{-- Opérateur : soumettre pour validation --}}
-            @if($isOperator && in_array($status, ['draft','rejected']))
+            {{-- Opérateur : soumettre → N+1 --}}
+            @if($isOp && in_array($status, ['draft','rejected']))
             <form method="POST" action="{{ route('campaigns.submit', $campaign->id) }}">
                 @csrf
                 <button type="submit" class="btn-primary">
@@ -151,47 +186,35 @@
             </form>
             @endif
 
-            {{-- Validateur : approuver --}}
-            @if($isValidator && $status === 'pending')
+            {{-- N1 : approuver → N+2 --}}
+            @if($isN1 && $status === 'pending_n1')
             <form method="POST" action="{{ route('campaigns.approve', $campaign->id) }}">
                 @csrf
                 <button type="submit" class="btn-success">
-                    <i class="fas fa-check"></i> Approuver
+                    <i class="fas fa-check"></i> Valider N+1 →N+2
                 </button>
             </form>
             @endif
 
-            {{-- Validateur : rejeter (modal Alpine) --}}
-            @if($isValidator && $status === 'pending')
+            {{-- N2 : approuver → approved --}}
+            @if($isN2 && $status === 'pending_n2')
+            <form method="POST" action="{{ route('campaigns.approve', $campaign->id) }}">
+                @csrf
+                <button type="submit" class="btn-success">
+                    <i class="fas fa-check-double"></i> Valider N+2 — Approuver
+                </button>
+            </form>
+            @endif
+
+            {{-- N1 ou N2 : rejeter --}}
+            @if(($isN1 && $status === 'pending_n1') || ($isN2 && $status === 'pending_n2'))
             <button type="button" class="btn-danger" @click="rejectOpen = true">
                 <i class="fas fa-times"></i> Rejeter
             </button>
-
-            <div x-show="rejectOpen" x-transition
-                 style="position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem;">
-                <div style="background:#fff; border-radius:0.875rem; padding:1.5rem; max-width:480px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.2);" @click.stop>
-                    <h3 style="font-size:1rem; font-weight:700; margin:0 0 .25rem;">Rejeter la campagne</h3>
-                    <p style="font-size:.875rem; color:var(--color-muted); margin:0 0 1rem;">L'opérateur recevra ce motif et pourra corriger sa campagne.</p>
-                    <form method="POST" action="{{ route('campaigns.reject', $campaign->id) }}">
-                        @csrf
-                        <textarea name="reason" x-model="reason" required
-                                  placeholder="Expliquez pourquoi cette campagne est rejetée…"
-                                  style="width:100%; padding:.75rem; border:1.5px solid var(--color-border); border-radius:.5rem; font-size:.875rem; min-height:100px; outline:none; resize:vertical;"
-                                  onfocus="this.style.borderColor='var(--color-primary)'"
-                                  onblur="this.style.borderColor='var(--color-border)'"></textarea>
-                        <div style="display:flex; gap:.75rem; justify-content:flex-end; margin-top:1rem;">
-                            <button type="button" class="btn-secondary" @click="rejectOpen = false">Annuler</button>
-                            <button type="submit" class="btn-danger" :disabled="!reason.trim()">
-                                <i class="fas fa-times"></i> Confirmer le rejet
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
             @endif
 
-            {{-- Opérateur/Admin : booster (seulement si approuvé) --}}
-            @if($isOperator && $status === 'approved')
+            {{-- Opérateur : booster (seulement si fully approved) --}}
+            @if($isOp && $status === 'approved')
             <form method="POST" action="{{ route('campaigns.launch', $campaign->id) }}"
                   onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Lancement…';">
                 @csrf
@@ -201,7 +224,7 @@
             </form>
             @endif
 
-            {{-- Admin : bypass validation —lancement direct depuis draft/error --}}
+            {{-- Admin bypass : lancer directement depuis draft/error --}}
             @if($isAdmin && in_array($status, ['draft','error']))
             <form method="POST" action="{{ route('campaigns.launch', $campaign->id) }}"
                   onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Lancement…';">
@@ -213,6 +236,30 @@
             @endif
 
         </div>
+
+        {{-- Modal rejet (partagé N1/N2) --}}
+        <div x-show="rejectOpen" x-transition
+             style="position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem;">
+            <div style="background:#fff; border-radius:.875rem; padding:1.5rem; max-width:480px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.2);" @click.stop>
+                <h3 style="font-size:1rem; font-weight:700; margin:0 0 .25rem;">Rejeter la campagne</h3>
+                <p style="font-size:.875rem; color:var(--color-muted); margin:0 0 1rem;">L'opérateur recevra ce motif et pourra corriger puis re-soumettre.</p>
+                <form method="POST" action="{{ route('campaigns.reject', $campaign->id) }}">
+                    @csrf
+                    <textarea name="reason" x-model="reason" required
+                              placeholder="Expliquez pourquoi cette campagne est rejetée…"
+                              style="width:100%; padding:.75rem; border:1.5px solid var(--color-border); border-radius:.5rem; font-size:.875rem; min-height:100px; outline:none; resize:vertical;"
+                              onfocus="this.style.borderColor='var(--color-primary)'"
+                              onblur="this.style.borderColor='var(--color-border)'"></textarea>
+                    <div style="display:flex; gap:.75rem; justify-content:flex-end; margin-top:1rem;">
+                        <button type="button" class="btn-secondary" @click="rejectOpen = false">Annuler</button>
+                        <button type="submit" class="btn-danger" :disabled="!reason.trim()">
+                            <i class="fas fa-times"></i> Confirmer le rejet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
 
 </div>

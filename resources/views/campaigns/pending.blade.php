@@ -3,6 +3,13 @@
 @section('page-title', 'Campagnes à valider')
 @section('page-subtitle', 'Examinez et approuvez les campagnes soumises par les opérateurs')
 
+@php
+    $user    = auth()->user();
+    $isAdmin = $user->hasRole('admin');
+    $isN2    = $user->hasRole(['validator_n2','admin']);
+    $isN1    = $user->hasRole(['validator_n1','validator','admin']);
+@endphp
+
 @section('content')
 
 @if(session('success'))
@@ -17,17 +24,30 @@
 </div>
 @endif
 
-{{-- Compteur --}}
-<div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+{{-- Compteurs N+1 / N+2 --}}
+<div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+    @if($isN1)
     <div class="stat-card" style="max-width:220px;">
         <div class="stat-icon" style="background:#fef9c3; color:#854d0e;">
             <i class="fas fa-clock"></i>
         </div>
         <div>
-            <div class="stat-value">{{ $pendingCount }}</div>
-            <div class="stat-label">En attente de validation</div>
+            <div class="stat-value">{{ $pendingN1Count }}</div>
+            <div class="stat-label">En attente N+1</div>
         </div>
     </div>
+    @endif
+    @if($isN2)
+    <div class="stat-card" style="max-width:220px;">
+        <div class="stat-icon" style="background:#dbeafe; color:#1d4ed8;">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div>
+            <div class="stat-value">{{ $pendingN2Count }}</div>
+            <div class="stat-label">En attente N+2</div>
+        </div>
+    </div>
+    @endif
 </div>
 
 @if($campaigns->isEmpty())
@@ -61,6 +81,11 @@
             <div style="display:flex; align-items:center; gap:.75rem;">
                 <span style="font-weight:700; color:var(--color-primary);">{{ $c->budget_formatted }}</span>
                 <span style="font-size:.8125rem; color:var(--color-muted);">{{ $c->duration_days }}j</span>
+                @if($c->execution_status === 'pending_n1')
+                <span class="badge-status badge-status-pending" style="font-size:.6875rem;">N+1</span>
+                @elseif($c->execution_status === 'pending_n2')
+                <span class="badge-status" style="font-size:.6875rem; background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd;">N+2</span>
+                @endif
                 <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'" style="color:var(--color-muted); font-size:.8125rem;"></i>
             </div>
         </div>
@@ -115,7 +140,11 @@
                     <form method="POST" action="{{ route('campaigns.approve', $c->id) }}">
                         @csrf
                         <button type="submit" class="btn-success btn-sm">
-                            <i class="fas fa-check"></i> Approuver
+                            @if($c->execution_status === 'pending_n1')
+                            <i class="fas fa-check"></i> Valider N+1 →N+2
+                            @else
+                            <i class="fas fa-check-double"></i> Valider N+2 — Approuver
+                            @endif
                         </button>
                     </form>
                 </div>

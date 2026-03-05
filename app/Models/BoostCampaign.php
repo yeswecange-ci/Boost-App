@@ -47,28 +47,30 @@ class BoostCampaign extends Model
     public function getStatusLabelAttribute(): string
     {
         return match($this->execution_status) {
-            'draft'    => 'Brouillon',
-            'pending'  => 'En attente de validation',
-            'approved' => 'Approuvée',
-            'rejected' => 'Rejetée',
-            'running'  => 'En cours…',
-            'done'     => 'Créée sur Meta',
-            'error'    => 'Erreur',
-            default    => ucfirst($this->execution_status),
+            'draft'      => 'Brouillon',
+            'pending_n1' => 'En attente N+1',
+            'pending_n2' => 'En attente N+2',
+            'approved'   => 'Approuvée',
+            'rejected'   => 'Rejetée',
+            'running'    => 'En cours…',
+            'done'       => 'Créée sur Meta',
+            'error'      => 'Erreur',
+            default      => ucfirst($this->execution_status),
         };
     }
 
     public function getStatusClassAttribute(): string
     {
         return match($this->execution_status) {
-            'draft'    => 'badge-status-draft',
-            'pending'  => 'badge-status-pending',
-            'approved' => 'badge-status-approved',
-            'rejected' => 'badge-status-rejected',
-            'running'  => 'badge-status-pending',
-            'done'     => 'badge-status-active',
-            'error'    => 'badge-status-rejected',
-            default    => 'badge-status-draft',
+            'draft'      => 'badge-status-draft',
+            'pending_n1' => 'badge-status-pending',
+            'pending_n2' => 'badge-status-pending',
+            'approved'   => 'badge-status-approved',
+            'rejected'   => 'badge-status-rejected',
+            'running'    => 'badge-status-pending',
+            'done'       => 'badge-status-active',
+            'error'      => 'badge-status-rejected',
+            default      => 'badge-status-draft',
         };
     }
 

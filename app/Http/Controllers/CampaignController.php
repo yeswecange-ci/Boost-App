@@ -37,13 +37,13 @@ class CampaignController extends Controller
 
         $base = fn() => BoostCampaign::when(!$isValidator, fn($q) => $q->where('user_id', $user->id));
         $counts = [
-            'all'      => $base()->count(),
-            'draft'    => $base()->where('execution_status', 'draft')->count(),
-            'pending'  => $base()->where('execution_status', 'pending')->count(),
-            'approved' => $base()->where('execution_status', 'approved')->count(),
-            'running'  => $base()->where('execution_status', 'running')->count(),
-            'done'     => $base()->where('execution_status', 'done')->count(),
-            'error'    => $base()->whereIn('execution_status', ['error','rejected'])->count(),
+            'all'        => $base()->count(),
+            'draft'      => $base()->where('execution_status', 'draft')->count(),
+            'pending_n1' => $base()->where('execution_status', 'pending_n1')->count(),
+            'pending_n2' => $base()->where('execution_status', 'pending_n2')->count(),
+            'approved'   => $base()->where('execution_status', 'approved')->count(),
+            'done'       => $base()->where('execution_status', 'done')->count(),
+            'error'      => $base()->whereIn('execution_status', ['error','rejected'])->count(),
         ];
 
         return view('campaigns.index', compact('campaigns', 'counts', 'isValidator'));
@@ -125,7 +125,7 @@ class CampaignController extends Controller
             ->with('success', 'Campagne enregistrée ! Cliquez sur "Booster" pour la lancer.');
     }
 
-    // ── Soumettre pour validation (draft → pending) ──────────────
+    // ── Soumettre pour validation N+1 (draft/rejected → pending_n1) ─
     public function submit(BoostCampaign $campaign)
     {
         if (!in_array($campaign->execution_status, ['draft', 'rejected'])) {
@@ -133,34 +133,54 @@ class CampaignController extends Controller
         }
 
         $campaign->update([
-            'execution_status' => 'pending',
+            'execution_status' => 'pending_n1',
             'error_message'    => null,
         ]);
 
         return redirect()->route('campaigns.show', $campaign->id)
-            ->with('success', 'Campagne soumise pour validation.');
+            ->with('success', 'Campagne soumise — en attente de validation N+1.');
     }
 
-    // ── Approuver (pending → approved) ───────────────────────────
+    // ── Approuver (pending_n1 → pending_n2, pending_n2 → approved) ─
     public function approve(BoostCampaign $campaign)
     {
-        if ($campaign->execution_status !== 'pending') {
-            return back()->with('error', 'Cette campagne n\'est pas en attente de validation.');
+        $user = auth()->user();
+
+        if ($campaign->execution_status === 'pending_n1') {
+            if (!$user->hasRole(['validator_n1', 'validator', 'admin'])) {
+                return back()->with('error', 'Vous n\'avez pas le rôle N+1 requis.');
+            }
+            $campaign->update(['execution_status' => 'pending_n2', 'error_message' => null]);
+            return redirect()->route('campaigns.show', $campaign->id)
+                ->with('success', 'Validation N+1 accordée — en attente de la validation N+2.');
         }
 
-        $campaign->update([
-            'execution_status' => 'approved',
-            'error_message'    => null,
-        ]);
+        if ($campaign->execution_status === 'pending_n2') {
+            if (!$user->hasRole(['validator_n2', 'admin'])) {
+                return back()->with('error', 'Vous n\'avez pas le rôle N+2 requis.');
+            }
+            $campaign->update(['execution_status' => 'approved', 'error_message' => null]);
+            return redirect()->route('campaigns.show', $campaign->id)
+                ->with('success', 'Validation N+2 accordée — campagne approuvée, prête à booster.');
+        }
 
-        return redirect()->route('campaigns.show', $campaign->id)
-            ->with('success', 'Campagne approuvée. L\'opérateur peut maintenant la booster.');
+        return back()->with('error', 'Cette campagne n\'est pas en attente de validation.');
     }
 
-    // ── Rejeter (pending → rejected) ─────────────────────────────
+    // ── Rejeter (pending_n1 ou pending_n2 → rejected) ─────────────
     public function reject(BoostCampaign $campaign)
     {
-        if ($campaign->execution_status !== 'pending') {
+        $user = auth()->user();
+
+        if ($campaign->execution_status === 'pending_n1') {
+            if (!$user->hasRole(['validator_n1', 'validator', 'admin'])) {
+                return back()->with('error', 'Vous n\'avez pas le rôle N+1 requis.');
+            }
+        } elseif ($campaign->execution_status === 'pending_n2') {
+            if (!$user->hasRole(['validator_n2', 'admin'])) {
+                return back()->with('error', 'Vous n\'avez pas le rôle N+2 requis.');
+            }
+        } else {
             return back()->with('error', 'Cette campagne n\'est pas en attente de validation.');
         }
 
@@ -172,20 +192,18 @@ class CampaignController extends Controller
         ]);
 
         return redirect()->route('campaigns.show', $campaign->id)
-            ->with('success', 'Campagne rejetée. L\'opérateur sera notifié.');
+            ->with('success', 'Campagne rejetée. L\'opérateur peut la corriger et re-soumettre.');
     }
 
-    // ── Lancer le boost (approved → running) ─────────────────────
+    // ── Lancer le boost (approved → triggerN8n) ───────────────────
     public function launch(BoostCampaign $campaign)
     {
-        $user = auth()->user();
+        $user    = auth()->user();
         $isAdmin = $user->hasRole('admin');
 
-        // Admin peut lancer sans validation, opérateur seulement si approved
         if (!$isAdmin && $campaign->execution_status !== 'approved') {
-            return back()->with('error', 'La campagne doit être approuvée avant d\'être boostée.');
+            return back()->with('error', 'La campagne doit être approuvée (N+1 + N+2) avant d\'être boostée.');
         }
-
         if ($isAdmin && !in_array($campaign->execution_status, ['draft','approved','error'])) {
             return back()->with('error', 'Cette campagne ne peut pas être lancée dans son état actuel.');
         }
@@ -196,18 +214,30 @@ class CampaignController extends Controller
             ->with('success', 'Boost lancé ! n8n va créer la campagne sur Meta Ads.');
     }
 
-    // ── Liste campagnes en attente de validation ──────────────────
+    // ── File d'attente validateurs ────────────────────────────────
     public function pendingList()
     {
         $user = auth()->user();
-        $campaigns = BoostCampaign::with('user')
-            ->where('execution_status', 'pending')
-            ->latest()
-            ->paginate(20);
 
-        $pendingCount = BoostCampaign::where('execution_status', 'pending')->count();
+        if ($user->hasRole('admin')) {
+            $campaigns = BoostCampaign::with('user')
+                ->whereIn('execution_status', ['pending_n1', 'pending_n2'])
+                ->latest()->paginate(20);
+        } elseif ($user->hasRole('validator_n2')) {
+            $campaigns = BoostCampaign::with('user')
+                ->where('execution_status', 'pending_n2')
+                ->latest()->paginate(20);
+        } else {
+            // validator_n1 / validator
+            $campaigns = BoostCampaign::with('user')
+                ->where('execution_status', 'pending_n1')
+                ->latest()->paginate(20);
+        }
 
-        return view('campaigns.pending', compact('campaigns', 'pendingCount'));
+        $pendingN1Count = BoostCampaign::where('execution_status', 'pending_n1')->count();
+        $pendingN2Count = BoostCampaign::where('execution_status', 'pending_n2')->count();
+
+        return view('campaigns.pending', compact('campaigns', 'pendingN1Count', 'pendingN2Count'));
     }
 
     public function show(BoostCampaign $campaign)

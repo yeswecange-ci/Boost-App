@@ -42,7 +42,6 @@ Route::middleware(['auth'])->group(function () {
     // ─── Campaigns Media Buyer ────────────────────────────────
     Route::get('/campaigns',         [CampaignController::class, 'index'])->name('campaigns.index');
     Route::get('/campaigns/create',  [CampaignController::class, 'create'])->name('campaigns.create');
-    Route::get('/campaigns/pending', [CampaignController::class, 'pendingList'])->name('campaigns.pending');
     Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
 
     // Opérateur : créer, soumettre, lancer
@@ -52,10 +51,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/campaigns/{campaign}/launch',  [CampaignController::class, 'launch'])->name('campaigns.launch');
     });
 
-    // Validateur : approuver, rejeter
+    // Validateurs N1 + N2 : approuver/rejeter (vérification fine dans le contrôleur)
     Route::middleware(['role:validator_n1,validator_n2,validator,admin'])->group(function () {
         Route::post('/campaigns/{campaign}/approve', [CampaignController::class, 'approve'])->name('campaigns.approve');
         Route::post('/campaigns/{campaign}/reject',  [CampaignController::class, 'reject'])->name('campaigns.reject');
+    });
+
+    // Page file d'attente validateurs
+    Route::middleware(['role:validator_n1,validator_n2,validator,admin'])->group(function () {
+        Route::get('/campaigns/pending', [CampaignController::class, 'pendingList'])->name('campaigns.pending');
     });
 
     // ─── Boost — Opérateur (operator + admin uniquement) ─────
