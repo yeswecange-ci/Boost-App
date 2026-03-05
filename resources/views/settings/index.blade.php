@@ -129,6 +129,23 @@ $isMockMeta = ($meta['meta.mock_mode'] ?? 'true') === 'true';
                            placeholder="https://n8n.votredomaine.com/webhook/boost-pause">
                 </div>
 
+                <div style="border-top:1px solid var(--color-border); padding-top:1rem; margin-top:0.25rem;">
+                    <label class="form-label" style="display:flex; align-items:center; gap:0.5rem;">
+                        <span style="background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; font-size:0.65rem; font-weight:700; padding:2px 7px; border-radius:9999px;">MEDIA BUYER</span>
+                        Campagne Media Buyer
+                        <span style="margin-left:0.25rem; padding:0.1rem 0.5rem; background:#dbeafe; color:#1d4ed8; border-radius:9999px; font-size:0.6875rem; font-weight:600;">POST</span>
+                    </label>
+                    <input type="url"
+                           name="n8n.webhook_campaign"
+                           class="form-control"
+                           value="{{ $n8n['n8n.webhook_campaign'] ?? '' }}"
+                           placeholder="https://n8n.votredomaine.com/webhook/campaign-create">
+                    <div style="font-size:0.75rem; color:#94a3b8; margin-top:0.25rem;">
+                        Reçoit <code style="background:#f1f5f9; padding:0.1rem 0.375rem; border-radius:0.25rem;">{ "campaign_db_id": 42 }</code>
+                        — n8n lit ensuite la ligne en BD via SQL SELECT
+                    </div>
+                </div>
+
             </div>
         </div>
 

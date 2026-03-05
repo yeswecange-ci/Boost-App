@@ -30,6 +30,7 @@ class SettingsController extends Controller
             'n8n_webhook_create'   => 'nullable|url',
             'n8n_webhook_activate' => 'nullable|url',
             'n8n_webhook_pause'    => 'nullable|url',
+            'n8n_webhook_campaign' => 'nullable|url',
             'n8n_secret'           => 'nullable|string|max:255',
             'n8n_timeout'          => 'nullable|integer|min:3|max:60',
         ]);

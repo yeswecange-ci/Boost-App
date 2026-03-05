@@ -1,0 +1,469 @@
+{
+  "name": "Agent Media Buyer YWC — Boost Campaign v2",
+  "nodes": [
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "campaign-create",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Webhook — Reçoit campaign_db_id",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 400],
+      "webhookId": "campaign-create-ywc"
+    },
+
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM boost_campaigns WHERE id = {{ $json.body.campaign_db_id }} LIMIT 1"
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "MySQL — SELECT boost_campaigns",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [260, 400],
+      "credentials": {
+        "mySql": {
+          "id": "CONFIGURE_IN_N8N",
+          "name": "MySQL — Boost Manager DB"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE boost_campaigns SET execution_status = 'running' WHERE id = {{ $json.id }}"
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "MySQL — UPDATE running",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [520, 400],
+      "credentials": {
+        "mySql": {
+          "id": "CONFIGURE_IN_N8N",
+          "name": "MySQL — Boost Manager DB"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "db-id",
+              "name": "campaign_db_id",
+              "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "targeting",
+              "name": "targeting_json",
+              "value": "={{ JSON.stringify({ geo_locations: { countries: JSON.parse($('MySQL — SELECT boost_campaigns').item.json.countries) }, interests: $('MySQL — SELECT boost_campaigns').item.json.interests ? JSON.parse($('MySQL — SELECT boost_campaigns').item.json.interests) : [] }) }}",
+              "type": "string"
+            },
+            {
+              "id": "creative",
+              "name": "creative_json",
+              "value": "={{ JSON.stringify({ object_story_id: $('MySQL — SELECT boost_campaigns').item.json.post_id }) }}",
+              "type": "string"
+            },
+            {
+              "id": "start",
+              "name": "start_time",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "end",
+              "name": "end_time",
+              "value": "={{ $now.plus({ days: parseInt($('MySQL — SELECT boost_campaigns').item.json.duration_days) }).toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "budget",
+              "name": "budget_cents",
+              "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.budget_value }}",
+              "type": "number"
+            },
+            {
+              "id": "existing-camp",
+              "name": "existing_campaign_id",
+              "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.existing_campaign_id || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "meta-token",
+              "name": "meta_ads_token",
+              "value": "COLLER_TOKEN_META_ICI",
+              "type": "string"
+            },
+            {
+              "id": "meta-account",
+              "name": "ad_account_id",
+              "value": "act_COLLER_ID_COMPTE_ICI",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-0004-0004-000000000004",
+      "name": "Build Payload depuis BD",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [780, 400]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "check-existing",
+              "leftValue": "={{ $json.existing_campaign_id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0005-0005-0005-000000000005",
+      "name": "IF — Campagne existante ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1040, 400]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.ad_account_id }}/campaigns",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "name",                          "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.campaign_name }}" },
+            { "name": "objective",                     "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.campaign_objective }}" },
+            { "name": "status",                        "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.campaign_status }}" },
+            { "name": "special_ad_categories",        "value": "=[]" },
+            { "name": "is_adset_budget_sharing_enabled", "value": "false" },
+            { "name": "access_token",                  "value": "={{ $json.meta_ads_token }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0006-0006-0006-000000000006",
+      "name": "HTTP — Create Campaign (PAUSED)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 600]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "camp-ok",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "exists", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0007-0007-0007-000000000007",
+      "name": "IF — Campaign OK ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 600]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Build Payload depuis BD').item.json.ad_account_id }}/adsets",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "name",               "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.adset_name }}" },
+            { "name": "campaign_id",        "value": "={{ $('Build Payload depuis BD').item.json.existing_campaign_id || $('HTTP — Create Campaign (PAUSED)').item.json.id }}" },
+            { "name": "={{ $('MySQL — SELECT boost_campaigns').item.json.budget_type }}", "value": "={{ $('Build Payload depuis BD').item.json.budget_cents }}" },
+            { "name": "billing_event",      "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.billing_event }}" },
+            { "name": "optimization_goal",  "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.optimization_goal }}" },
+            { "name": "bid_strategy",       "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.bid_strategy }}" },
+            { "name": "status",             "value": "PAUSED" },
+            { "name": "targeting",          "value": "={{ $('Build Payload depuis BD').item.json.targeting_json }}" },
+            { "name": "start_time",         "value": "={{ $('Build Payload depuis BD').item.json.start_time }}" },
+            { "name": "end_time",           "value": "={{ $('Build Payload depuis BD').item.json.end_time }}" },
+            { "name": "is_adset_budget_sharing_enabled", "value": "false" },
+            { "name": "access_token",       "value": "={{ $('Build Payload depuis BD').item.json.meta_ads_token }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0008-0008-0008-000000000008",
+      "name": "HTTP — Create Ad Set (PAUSED)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 400]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "adset-ok",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "exists", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0009-0009-0009-000000000009",
+      "name": "IF — Ad Set OK ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2080, 400]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Build Payload depuis BD').item.json.ad_account_id }}/ads",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "name",         "value": "={{ $('MySQL — SELECT boost_campaigns').item.json.ad_name }}" },
+            { "name": "adset_id",     "value": "={{ $('HTTP — Create Ad Set (PAUSED)').item.json.id }}" },
+            { "name": "status",       "value": "PAUSED" },
+            { "name": "creative",     "value": "={{ $('Build Payload depuis BD').item.json.creative_json }}" },
+            { "name": "access_token", "value": "={{ $('Build Payload depuis BD').item.json.meta_ads_token }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0010-0010-0010-000000000010",
+      "name": "HTTP — Create Ad (PAUSED)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2340, 400]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "ad-ok",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "exists", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0011-0011-0011-000000000011",
+      "name": "IF — Ad OK ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2600, 400]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_LARAVEL_URL/webhook/n8n/campaign-done",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "campaign_db_id",   "value": "={{ $('Build Payload depuis BD').item.json.campaign_db_id }}" },
+            { "name": "execution_status", "value": "done" },
+            { "name": "meta_campaign_id", "value": "={{ $('HTTP — Create Campaign (PAUSED)').item.json.id ?? $('Build Payload depuis BD').item.json.existing_campaign_id }}" },
+            { "name": "meta_adset_id",    "value": "={{ $('HTTP — Create Ad Set (PAUSED)').item.json.id }}" },
+            { "name": "meta_ad_id",       "value": "={{ $('HTTP — Create Ad (PAUSED)').item.json.id }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0012-0012-0012-000000000012",
+      "name": "HTTP — Callback DONE → Laravel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2860, 300]
+    },
+
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, campaign_db_id: $('Build Payload depuis BD').item.json.campaign_db_id }) }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0013-0013-0013-000000000013",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2860, 140]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "err-step", "name": "error_step", "value": "Campaign", "type": "string" },
+            { "id": "err-msg",  "name": "error_message", "value": "={{ JSON.stringify($('HTTP — Create Campaign (PAUSED)').item.json) }}", "type": "string" }
+          ]
+        }, "options": {}
+      },
+      "id": "a1b2c3d4-0014-0014-0014-000000000014",
+      "name": "ERROR — Campaign",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1820, 700]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "err-step2", "name": "error_step", "value": "AdSet", "type": "string" },
+            { "id": "err-msg2",  "name": "error_message", "value": "={{ JSON.stringify($('HTTP — Create Ad Set (PAUSED)').item.json) }}", "type": "string" }
+          ]
+        }, "options": {}
+      },
+      "id": "a1b2c3d4-0015-0015-0015-000000000015",
+      "name": "ERROR — Ad Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [2340, 700]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "err-step3", "name": "error_step", "value": "Ad", "type": "string" },
+            { "id": "err-msg3",  "name": "error_message", "value": "={{ JSON.stringify($('HTTP — Create Ad (PAUSED)').item.json) }}", "type": "string" }
+          ]
+        }, "options": {}
+      },
+      "id": "a1b2c3d4-0016-0016-0016-000000000016",
+      "name": "ERROR — Ad",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [2860, 700]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_LARAVEL_URL/webhook/n8n/campaign-done",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "campaign_db_id",   "value": "={{ $('Build Payload depuis BD').item.json.campaign_db_id }}" },
+            { "name": "execution_status", "value": "error" },
+            { "name": "error_message",    "value": "={{ '[' + $json.error_step + '] ' + $json.error_message }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0017-0017-0017-000000000017",
+      "name": "HTTP — Callback ERROR → Laravel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3120, 700]
+    }
+
+  ],
+
+  "connections": {
+    "Webhook — Reçoit campaign_db_id": {
+      "main": [[{ "node": "MySQL — SELECT boost_campaigns", "type": "main", "index": 0 }]]
+    },
+    "MySQL — SELECT boost_campaigns": {
+      "main": [[{ "node": "MySQL — UPDATE running", "type": "main", "index": 0 }]]
+    },
+    "MySQL — UPDATE running": {
+      "main": [[{ "node": "Build Payload depuis BD", "type": "main", "index": 0 }]]
+    },
+    "Build Payload depuis BD": {
+      "main": [[{ "node": "IF — Campagne existante ?", "type": "main", "index": 0 }]]
+    },
+    "IF — Campagne existante ?": {
+      "main": [
+        [{ "node": "HTTP — Create Ad Set (PAUSED)", "type": "main", "index": 0 }],
+        [{ "node": "HTTP — Create Campaign (PAUSED)", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP — Create Campaign (PAUSED)": {
+      "main": [[{ "node": "IF — Campaign OK ?", "type": "main", "index": 0 }]]
+    },
+    "IF — Campaign OK ?": {
+      "main": [
+        [{ "node": "HTTP — Create Ad Set (PAUSED)", "type": "main", "index": 0 }],
+        [{ "node": "ERROR — Campaign", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP — Create Ad Set (PAUSED)": {
+      "main": [[{ "node": "IF — Ad Set OK ?", "type": "main", "index": 0 }]]
+    },
+    "IF — Ad Set OK ?": {
+      "main": [
+        [{ "node": "HTTP — Create Ad (PAUSED)", "type": "main", "index": 0 }],
+        [{ "node": "ERROR — Ad Set", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP — Create Ad (PAUSED)": {
+      "main": [[{ "node": "IF — Ad OK ?", "type": "main", "index": 0 }]]
+    },
+    "IF — Ad OK ?": {
+      "main": [
+        [
+          { "node": "HTTP — Callback DONE → Laravel", "type": "main", "index": 0 },
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ],
+        [{ "node": "ERROR — Ad", "type": "main", "index": 0 }]
+      ]
+    },
+    "ERROR — Campaign": {
+      "main": [[{ "node": "HTTP — Callback ERROR → Laravel", "type": "main", "index": 0 }]]
+    },
+    "ERROR — Ad Set": {
+      "main": [[{ "node": "HTTP — Callback ERROR → Laravel", "type": "main", "index": 0 }]]
+    },
+    "ERROR — Ad": {
+      "main": [[{ "node": "HTTP — Callback ERROR → Laravel", "type": "main", "index": 0 }]]
+    }
+  },
+
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "Media Buyer YWC" }]
+}
