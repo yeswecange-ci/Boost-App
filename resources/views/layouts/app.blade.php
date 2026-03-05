@@ -118,32 +118,45 @@
         </div>
         @endif
 
-        @if(auth()->user()->hasRole(['validator_n1', 'validator', 'admin']))
-        @php $n1Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n1')->count(); @endphp
-        <a href="{{ route('campaigns.pending') }}"
-           class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
-            <span class="icon"><i class="fas fa-clock"></i></span>
-            File N+1
-            @if($n1Count > 0)
-            <span style="margin-left:auto; background:#ef4444; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
-                {{ $n1Count }}
-            </span>
-            @endif
-        </a>
-        @endif
+        @php $_cu_v = auth()->user(); @endphp
 
-        @if(auth()->user()->hasRole(['validator_n2', 'admin']))
-        @php $n2Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n2')->count(); @endphp
-        <a href="{{ route('campaigns.pending') }}"
-           class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
-            <span class="icon"><i class="fas fa-shield-halved"></i></span>
-            File N+2
-            @if($n2Count > 0)
-            <span style="margin-left:auto; background:#f59e0b; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
-                {{ $n2Count }}
-            </span>
-            @endif
-        </a>
+        @if($_cu_v->hasRole('admin'))
+            {{-- Admin : une seule entrée avec le total N1 + N2 --}}
+            @php $vCount = \App\Models\BoostCampaign::whereIn('execution_status', ['pending_n1','pending_n2'])->count(); @endphp
+            <a href="{{ route('campaigns.pending') }}"
+               class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
+                <span class="icon"><i class="fas fa-gavel"></i></span>
+                File validation
+                @if($vCount > 0)
+                <span style="margin-left:auto; background:#ef4444; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
+                    {{ $vCount }}
+                </span>
+                @endif
+            </a>
+        @elseif($_cu_v->hasRole(['validator_n1', 'validator']))
+            @php $n1Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n1')->count(); @endphp
+            <a href="{{ route('campaigns.pending') }}"
+               class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
+                <span class="icon"><i class="fas fa-clock"></i></span>
+                File N+1
+                @if($n1Count > 0)
+                <span style="margin-left:auto; background:#ef4444; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
+                    {{ $n1Count }}
+                </span>
+                @endif
+            </a>
+        @elseif($_cu_v->hasRole('validator_n2'))
+            @php $n2Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n2')->count(); @endphp
+            <a href="{{ route('campaigns.pending') }}"
+               class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
+                <span class="icon"><i class="fas fa-shield-halved"></i></span>
+                File N+2
+                @if($n2Count > 0)
+                <span style="margin-left:auto; background:#f59e0b; color:#fff; font-size:0.6875rem; font-weight:700; padding:0.125rem 0.5rem; border-radius:9999px;">
+                    {{ $n2Count }}
+                </span>
+                @endif
+            </a>
         @endif
 
         @if(auth()->user()->hasRole(['validator_n1', 'validator', 'validator_n2', 'admin']))
