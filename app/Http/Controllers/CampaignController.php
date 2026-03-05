@@ -9,6 +9,7 @@ use App\Services\SettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CampaignController extends Controller
 {
@@ -47,53 +48,63 @@ class CampaignController extends Controller
 
     public function create(Request $request)
     {
-        $pages = FacebookPage::where('is_active', true)->get();
-        $selectedPageId = $request->get('page_id', $pages->first()?->page_id);
+        $postId = $request->get('post_id');
 
-        $posts = FacebookPost::when($selectedPageId, function ($q) use ($selectedPageId, $pages) {
-            $page = $pages->firstWhere('page_id', $selectedPageId);
-            if ($page) $q->where('facebook_page_id', $page->id)->where('is_boostable', 1);
-        })->orderByDesc('posted_at')->get();
+        // Charger le post depuis posts_master si post_id fourni
+        $post = null;
+        if ($postId) {
+            $post = FacebookPost::with('page')->where('post_id', $postId)->first();
+        }
 
-        return view('campaigns.create', compact('pages', 'selectedPageId', 'posts'));
+        // Si pas de post trouvé, lister tous les posts boostables pour sélection
+        $posts = null;
+        if (!$post) {
+            $posts = FacebookPost::with('page')
+                ->where('is_boostable', 1)
+                ->orderByDesc('posted_at')
+                ->get();
+        }
+
+        return view('campaigns.create', compact('post', 'posts'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'campaign_name'         => 'required|string|max:255',
-            'campaign_objective'    => 'required|string',
-            'special_ad_categories' => 'required|string',
-            'campaign_status'       => 'required|in:PAUSED,ACTIVE',
-            'existing_campaign_id'  => 'nullable|string|max:100',
-            'adset_name'            => 'required|string|max:255',
-            'budget_type'           => 'required|in:lifetime_budget,daily_budget',
-            'budget_value'          => 'required|integer|min:500',
-            'duration_days'         => 'required|integer|min:1|max:90',
-            'countries'             => 'required|array|min:1',
-            'interests'             => 'nullable|array',
-            'optimization_goal'     => 'required|string',
-            'billing_event'         => 'required|string',
-            'bid_strategy'          => 'required|string',
-            'ad_name'               => 'required|string|max:255',
-            'post_id'               => 'required|string|max:100',
-            'ad_status'             => 'required|in:PAUSED,ACTIVE',
+        $request->validate([
+            'post_id'      => 'required|string|max:100',
+            'budget_value' => 'required|integer|min:500',
+            'duration_days'=> 'required|integer|min:1|max:90',
         ]);
+
+        $post = FacebookPost::where('post_id', $request->post_id)->first();
+        $snippet = $post ? Str::limit($post->message ?: 'Post #'.$request->post_id, 40) : 'Post';
+        $now     = now()->format('d/m/Y');
 
         $campaign = BoostCampaign::create([
-            ...$validated,
-            'user_id'          => auth()->id(),
-            'execution_status' => 'pending',
+            'user_id'               => auth()->id(),
+            'post_id'               => $request->post_id,
+            'budget_value'          => $request->budget_value,
+            'duration_days'         => $request->duration_days,
+            // Champs auto-générés
+            'campaign_name'         => "Boost – {$snippet} – {$now}",
+            'adset_name'            => "AdSet CI – {$request->duration_days}j – {$now}",
+            'ad_name'               => 'Ad – Boost Existing Post',
+            'campaign_objective'    => 'OUTCOME_TRAFFIC',
+            'special_ad_categories' => 'NONE',
+            'campaign_status'       => 'PAUSED',
+            'budget_type'           => 'lifetime_budget',
+            'countries'             => ['CI'],
+            'optimization_goal'     => 'LINK_CLICKS',
+            'billing_event'         => 'IMPRESSIONS',
+            'bid_strategy'          => 'LOWEST_COST_WITHOUT_CAP',
+            'ad_status'             => 'PAUSED',
+            'execution_status'      => 'pending',
         ]);
 
-        // Envoyer l'ID au webhook n8n
         $this->triggerN8n($campaign);
 
-        return response()->json([
-            'success'     => true,
-            'campaign_id' => $campaign->id,
-            'redirect'    => route('campaigns.index'),
-        ]);
+        return redirect()->route('campaigns.show', $campaign->id)
+            ->with('success', 'Campagne lancée avec succès !');
     }
 
     public function show(BoostCampaign $campaign)

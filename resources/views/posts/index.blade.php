@@ -148,7 +148,7 @@
         {{-- Footer / Actions --}}
         <div style="padding:0.75rem 1rem; border-top:1px solid #f1f5f9; display:flex; flex-direction:column; gap:0.5rem;">
             @if($boostable)
-            <a href="{{ route('boost.create', ['post_id' => $post['id'], 'page_id' => $selectedPage->page_id]) }}"
+            <a href="{{ route('campaigns.create', ['post_id' => $post['id']]) }}"
                class="btn-primary"
                style="width:100%; justify-content:center;">
                 <i class="fas fa-rocket"></i>
