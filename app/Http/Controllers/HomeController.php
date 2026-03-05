@@ -52,7 +52,9 @@ class HomeController extends Controller
                 $q->where('fb_status', '!=', 'FB_OK')
                   ->orWhere('business_status', '!=', 'ACTIVE')
                   ->orWhere('is_boostable', 0);
-              })->count()
+              })
+              ->when($pageIds !== null, fn($q) => $q->whereIn('facebook_page_id', $pageIds))
+              ->count()
             : 0;
 
         return view('home', compact(

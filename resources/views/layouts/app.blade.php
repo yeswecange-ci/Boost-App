@@ -48,6 +48,16 @@
 
     {{-- Nav --}}
     <nav style="padding: 1rem 0.75rem; flex: 1;">
+    @php
+        // Calcul unique des post_ids accessibles pour les badges sidebar
+        $_navUser = auth()->user();
+        if ($_navUser->hasRole('admin')) {
+            $_navAllowedPostIds = null; // pas de filtre
+        } else {
+            $_navPageDbIds      = $_navUser->facebookPages()->pluck('facebook_pages.id')->toArray();
+            $_navAllowedPostIds = \App\Models\FacebookPost::whereIn('facebook_page_id', $_navPageDbIds)->pluck('post_id');
+        }
+    @endphp
 
         <div style="font-size: 0.6875rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 0.5rem; margin-bottom: 0.5rem;">
             Navigation
@@ -82,9 +92,13 @@
                 if ($_cu->hasRole('admin')) {
                     $campPendingCount = \App\Models\BoostCampaign::whereIn('execution_status', ['pending_n1','pending_n2'])->count();
                 } elseif ($_cu->hasRole('validator_n2')) {
-                    $campPendingCount = \App\Models\BoostCampaign::where('execution_status', 'pending_n2')->count();
+                    $campPendingCount = \App\Models\BoostCampaign::where('execution_status', 'pending_n2')
+                        ->when($_navAllowedPostIds !== null, fn($q) => $q->whereIn('post_id', $_navAllowedPostIds))
+                        ->count();
                 } elseif ($_cu->hasRole(['validator_n1','validator'])) {
-                    $campPendingCount = \App\Models\BoostCampaign::where('execution_status', 'pending_n1')->count();
+                    $campPendingCount = \App\Models\BoostCampaign::where('execution_status', 'pending_n1')
+                        ->when($_navAllowedPostIds !== null, fn($q) => $q->whereIn('post_id', $_navAllowedPostIds))
+                        ->count();
                 } else {
                     $campPendingCount = 0;
                 }
@@ -126,7 +140,7 @@
         @php $_cu_v = auth()->user(); @endphp
 
         @if($_cu_v->hasRole('admin'))
-            {{-- Admin : une seule entrée avec le total N1 + N2 --}}
+            {{-- Admin : une seule entrée avec le total N1 + N2 (pas de filtre pages) --}}
             @php $vCount = \App\Models\BoostCampaign::whereIn('execution_status', ['pending_n1','pending_n2'])->count(); @endphp
             <a href="{{ route('campaigns.pending') }}"
                class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
@@ -139,7 +153,9 @@
                 @endif
             </a>
         @elseif($_cu_v->hasRole(['validator_n1', 'validator']))
-            @php $n1Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n1')->count(); @endphp
+            @php $n1Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n1')
+                ->when($_navAllowedPostIds !== null, fn($q) => $q->whereIn('post_id', $_navAllowedPostIds))
+                ->count(); @endphp
             <a href="{{ route('campaigns.pending') }}"
                class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
                 <span class="icon"><i class="fas fa-clock"></i></span>
@@ -151,7 +167,9 @@
                 @endif
             </a>
         @elseif($_cu_v->hasRole('validator_n2'))
-            @php $n2Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n2')->count(); @endphp
+            @php $n2Count = \App\Models\BoostCampaign::where('execution_status', 'pending_n2')
+                ->when($_navAllowedPostIds !== null, fn($q) => $q->whereIn('post_id', $_navAllowedPostIds))
+                ->count(); @endphp
             <a href="{{ route('campaigns.pending') }}"
                class="sidebar-item {{ request()->is('campaigns/pending') ? 'active' : '' }}">
                 <span class="icon"><i class="fas fa-shield-halved"></i></span>

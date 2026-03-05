@@ -12,13 +12,12 @@ class User extends Authenticatable
     use Notifiable, HasRoles;
 
     protected $fillable = [
-        'name', 'email', 'password', 'phone', 'avatar', 'page_ids', 'is_active'
+        'name', 'email', 'password', 'phone', 'avatar', 'is_active'
     ];
 
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
-        'page_ids' => 'array',
         'is_active' => 'boolean',
     ];
 

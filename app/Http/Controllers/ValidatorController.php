@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Approval;
 use App\Models\BoostCampaign;
 use App\Models\BoostRequest;
+use App\Models\FacebookPage;
+use App\Models\FacebookPost;
 use App\Models\User;
 use App\Notifications\BoostApprovedNotification;
 use App\Notifications\BoostRejectedNotification;
@@ -30,8 +32,11 @@ class ValidatorController extends Controller
      */
     public function pendingN1()
     {
+        $fbPageIds = $this->scopedFbPageStringIds();
+
         $boosts = BoostRequest::with('operator')
                               ->where('status', 'pending_n1')
+                              ->when($fbPageIds !== null, fn($q) => $q->whereIn('page_id', $fbPageIds))
                               ->latest()
                               ->paginate(10);
 
@@ -43,8 +48,11 @@ class ValidatorController extends Controller
      */
     public function pendingN2()
     {
+        $fbPageIds = $this->scopedFbPageStringIds();
+
         $boosts = BoostRequest::with('operator', 'approvals.user')
                               ->where('status', 'pending_n2')
+                              ->when($fbPageIds !== null, fn($q) => $q->whereIn('page_id', $fbPageIds))
                               ->latest()
                               ->paginate(10);
 
@@ -56,7 +64,13 @@ class ValidatorController extends Controller
      */
     public function all(Request $request)
     {
-        $query = BoostCampaign::with('user');
+        $pageIds        = auth()->user()->scopedFacebookPageIds();
+        $allowedPostIds = $pageIds !== null
+            ? FacebookPost::whereIn('facebook_page_id', $pageIds)->pluck('post_id')
+            : null;
+
+        $query = BoostCampaign::with('user')
+            ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds));
 
         if ($request->status === 'pending') {
             $query->whereIn('execution_status', ['pending_n1', 'pending_n2']);
@@ -113,7 +127,11 @@ class ValidatorController extends Controller
 
         // Notifications et N8N en dehors de la transaction
         if ($boost->needsN2()) {
-            $n2Users = User::role('validator_n2')->get();
+            // Notifier uniquement les N+2 assignés à la page concernée
+            $boostFbPageDbId = FacebookPage::where('page_id', $boost->page_id)->value('id');
+            $n2Users = User::role('validator_n2')
+                ->when($boostFbPageDbId, fn($q) => $q->whereHas('facebookPages', fn($q2) => $q2->where('facebook_pages.id', $boostFbPageDbId)))
+                ->get();
             foreach ($n2Users as $user) {
                 $user->notify(new BoostPendingN2Notification($boost));
             }
@@ -397,5 +415,17 @@ class ValidatorController extends Controller
         }
 
         return redirect()->back()->with('success', "N8N relancé pour le boost #" . $boost->id . ".");
+    }
+
+    /**
+     * Retourne les page_id (string Facebook) accessibles à l'utilisateur courant.
+     * null = admin = pas de filtre. [] = aucune page assignée.
+     */
+    private function scopedFbPageStringIds(): ?array
+    {
+        $user    = auth()->user();
+        $pageIds = $user->scopedFacebookPageIds(); // array d'IDs DB ou null
+        if ($pageIds === null) return null;
+        return FacebookPage::whereIn('id', $pageIds)->pluck('page_id')->toArray();
     }
 }
