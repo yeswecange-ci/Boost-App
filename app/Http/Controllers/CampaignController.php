@@ -71,40 +71,57 @@ class CampaignController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'post_id'      => 'required|string|max:100',
-            'budget_value' => 'required|integer|min:500',
-            'duration_days'=> 'required|integer|min:1|max:90',
+            'post_id'               => 'required|string|max:100',
+            'campaign_name'         => 'required|string|max:255',
+            'campaign_objective'    => 'required|string',
+            'special_ad_categories' => 'required|string',
+            'campaign_status'       => 'required|in:PAUSED,ACTIVE',
+            'existing_campaign_id'  => 'nullable|string|max:100',
+            'adset_name'            => 'required|string|max:255',
+            'budget_type'           => 'required|in:lifetime_budget,daily_budget',
+            'budget_value'          => 'required|integer|min:500',
+            'duration_days'         => 'required|integer|min:1|max:90',
+            'countries'             => 'required|array|min:1',
+            'interests_value'       => 'nullable|string',
+            'optimization_goal'     => 'required|string',
+            'billing_event'         => 'required|string',
+            'bid_strategy'          => 'required|string',
+            'ad_name'               => 'required|string|max:255',
+            'ad_status'             => 'required|in:PAUSED,ACTIVE',
         ]);
 
-        $post = FacebookPost::where('post_id', $request->post_id)->first();
-        $snippet = $post ? Str::limit($post->message ?: 'Post #'.$request->post_id, 40) : 'Post';
-        $now     = now()->format('d/m/Y');
+        // Décoder les intérêts depuis le champ JSON caché
+        $interests = null;
+        if ($request->filled('interests_value')) {
+            $interests = json_decode($request->interests_value, true) ?: null;
+        }
 
         $campaign = BoostCampaign::create([
             'user_id'               => auth()->id(),
             'post_id'               => $request->post_id,
+            'campaign_name'         => $request->campaign_name,
+            'campaign_objective'    => $request->campaign_objective,
+            'special_ad_categories' => $request->special_ad_categories,
+            'campaign_status'       => $request->campaign_status,
+            'existing_campaign_id'  => $request->existing_campaign_id,
+            'adset_name'            => $request->adset_name,
+            'budget_type'           => $request->budget_type,
             'budget_value'          => $request->budget_value,
             'duration_days'         => $request->duration_days,
-            // Champs auto-générés
-            'campaign_name'         => "Boost – {$snippet} – {$now}",
-            'adset_name'            => "AdSet CI – {$request->duration_days}j – {$now}",
-            'ad_name'               => 'Ad – Boost Existing Post',
-            'campaign_objective'    => 'OUTCOME_TRAFFIC',
-            'special_ad_categories' => 'NONE',
-            'campaign_status'       => 'PAUSED',
-            'budget_type'           => 'lifetime_budget',
-            'countries'             => ['CI'],
-            'optimization_goal'     => 'LINK_CLICKS',
-            'billing_event'         => 'IMPRESSIONS',
-            'bid_strategy'          => 'LOWEST_COST_WITHOUT_CAP',
-            'ad_status'             => 'PAUSED',
+            'countries'             => $request->countries,
+            'interests'             => $interests,
+            'optimization_goal'     => $request->optimization_goal,
+            'billing_event'         => $request->billing_event,
+            'bid_strategy'          => $request->bid_strategy,
+            'ad_name'               => $request->ad_name,
+            'ad_status'             => $request->ad_status,
             'execution_status'      => 'pending',
         ]);
 
         $this->triggerN8n($campaign);
 
         return redirect()->route('campaigns.show', $campaign->id)
-            ->with('success', 'Campagne lancée avec succès !');
+            ->with('success', 'Campagne enregistrée et envoyée à n8n !');
     }
 
     public function show(BoostCampaign $campaign)
