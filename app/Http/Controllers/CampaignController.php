@@ -41,7 +41,7 @@ class CampaignController extends Controller
 
         if ($status = $request->get('status')) {
             if ($status === 'done') {
-                $query->whereIn('execution_status', ['done', 'paused_ready']);
+                $query->whereIn('execution_status', ['done', 'paused_ready', 'active']);
             } else {
                 $query->where('execution_status', $status);
             }
@@ -57,7 +57,7 @@ class CampaignController extends Controller
             'pending_n1' => $base()->where('execution_status', 'pending_n1')->count(),
             'pending_n2' => $base()->where('execution_status', 'pending_n2')->count(),
             'approved'   => $base()->where('execution_status', 'approved')->count(),
-            'done'       => $base()->whereIn('execution_status', ['done', 'paused_ready'])->count(),
+            'done'       => $base()->whereIn('execution_status', ['done', 'paused_ready', 'active'])->count(),
             'error'      => $base()->whereIn('execution_status', ['error','rejected'])->count(),
         ];
 
@@ -235,6 +235,75 @@ class CampaignController extends Controller
 
         return redirect()->route('campaigns.show', $campaign->id)
             ->with('success', 'Campagne rejetée. L\'opérateur peut la corriger et re-soumettre.');
+    }
+
+    // ── Activer sur Meta (paused_ready → active) ─────────────────
+    public function activate(BoostCampaign $campaign)
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('admin') && $campaign->user_id !== $user->id) {
+            abort(403, 'Vous ne pouvez pas activer une campagne qui ne vous appartient pas.');
+        }
+
+        if ($campaign->execution_status !== 'paused_ready') {
+            return back()->with('error', 'Seules les campagnes en statut "Créée (PAUSED)" peuvent être activées.');
+        }
+
+        // Récupérer le token Meta via le post → page
+        $post  = FacebookPost::where('post_id', $campaign->post_id)->first();
+        $page  = $post ? FacebookPage::find($post->facebook_page_id) : null;
+        $token = $page?->access_token;
+
+        if (!$token) {
+            return back()->with('error', 'Token Meta introuvable pour cette page. Vérifiez la configuration des pages Facebook.');
+        }
+
+        try {
+            $errors = [];
+
+            foreach ([
+                'Campaign' => $campaign->meta_campaign_id,
+                'AdSet'    => $campaign->meta_adset_id,
+                'Ad'       => $campaign->meta_ad_id,
+            ] as $label => $metaId) {
+                if (!$metaId) continue;
+                $resp = Http::asForm()
+                    ->post("https://graph.facebook.com/v23.0/{$metaId}", [
+                        'status'       => 'ACTIVE',
+                        'access_token' => $token,
+                    ]);
+                if ($resp->failed() || isset($resp->json()['error'])) {
+                    $errors[] = "{$label}: " . ($resp->json()['error']['message'] ?? $resp->body());
+                }
+            }
+
+            if (!empty($errors)) {
+                $campaign->update([
+                    'execution_status' => 'error',
+                    'error_message'    => 'Échec activation : ' . implode(' | ', $errors),
+                ]);
+                return redirect()->route('campaigns.show', $campaign->id)
+                    ->with('error', 'Erreur lors de l\'activation sur Meta : ' . implode(' | ', $errors));
+            }
+
+            $campaign->update([
+                'execution_status' => 'active',
+                'error_message'    => null,
+            ]);
+
+            return redirect()->route('campaigns.show', $campaign->id)
+                ->with('success', 'Campagne activée sur Meta Ads ! Elle est maintenant en diffusion.');
+
+        } catch (\Throwable $e) {
+            Log::error('CampaignController::activate', ['error' => $e->getMessage()]);
+            $campaign->update([
+                'execution_status' => 'error',
+                'error_message'    => $e->getMessage(),
+            ]);
+            return redirect()->route('campaigns.show', $campaign->id)
+                ->with('error', 'Erreur inattendue lors de l\'activation : ' . $e->getMessage());
+        }
     }
 
     // ── Lancer le boost (approved → triggerN8n) ───────────────────

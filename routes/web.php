@@ -51,11 +51,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
 
-    // Opérateur : créer, soumettre, lancer
+    // Opérateur : créer, soumettre, lancer, activer
     Route::middleware(['role:operator,admin'])->group(function () {
-        Route::post('/campaigns',                    [CampaignController::class, 'store'])->name('campaigns.store');
-        Route::post('/campaigns/{campaign}/submit',  [CampaignController::class, 'submit'])->name('campaigns.submit');
-        Route::post('/campaigns/{campaign}/launch',  [CampaignController::class, 'launch'])->name('campaigns.launch');
+        Route::post('/campaigns',                      [CampaignController::class, 'store'])->name('campaigns.store');
+        Route::post('/campaigns/{campaign}/submit',    [CampaignController::class, 'submit'])->name('campaigns.submit');
+        Route::post('/campaigns/{campaign}/launch',    [CampaignController::class, 'launch'])->name('campaigns.launch');
+        Route::post('/campaigns/{campaign}/activate',  [CampaignController::class, 'activate'])->name('campaigns.activate');
     });
 
     // Validateurs N1 + N2 : approuver/rejeter (vérification fine dans le contrôleur)

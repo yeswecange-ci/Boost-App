@@ -126,6 +126,20 @@
         $status    = $campaign->execution_status;
     @endphp
 
+    {{-- Info : campagne créée sur Meta en PAUSED, en attente d'activation --}}
+    @if($status === 'paused_ready')
+    <div class="alert alert-warning" style="display:flex; align-items:flex-start; gap:.75rem;">
+        <i class="fas fa-pause-circle" style="font-size:1.125rem; margin-top:.1rem; flex-shrink:0;"></i>
+        <div>
+            <strong>Campagne créée sur Meta — en attente d'activation</strong>
+            <p style="margin:.25rem 0 0; font-size:.875rem;">
+                N8N a créé la campagne, l'ad set et l'annonce sur Meta Ads en statut <strong>PAUSED</strong>.
+                Cliquez sur <strong>Activer sur Meta</strong> pour lancer la diffusion.
+            </p>
+        </div>
+    </div>
+    @endif
+
     {{-- Motif de rejet --}}
     @if($status === 'rejected' && $campaign->error_message)
     <div class="alert alert-danger">
@@ -231,6 +245,17 @@
                 @csrf
                 <button type="submit" class="btn-secondary">
                     <i class="fas fa-rocket"></i> {{ $status === 'error' ? 'Relancer' : 'Lancer sans validation' }}
+                </button>
+            </form>
+            @endif
+
+            {{-- Opérateur/Admin : activer la campagne PAUSED sur Meta --}}
+            @if($isOp && $status === 'paused_ready')
+            <form method="POST" action="{{ route('campaigns.activate', $campaign->id) }}"
+                  onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Activation…';">
+                @csrf
+                <button type="submit" class="btn-success">
+                    <i class="fas fa-play"></i> Activer sur Meta
                 </button>
             </form>
             @endif

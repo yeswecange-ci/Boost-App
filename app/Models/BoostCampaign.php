@@ -64,6 +64,7 @@ class BoostCampaign extends Model
             'running'    => 'En cours…',
             'done'         => 'Créée sur Meta',
             'paused_ready' => 'Créée sur Meta (PAUSED)',
+            'active'       => 'Active sur Meta',
             'error'        => 'Erreur',
             default      => ucfirst($this->execution_status),
         };
@@ -80,6 +81,7 @@ class BoostCampaign extends Model
             'running'    => 'badge-status-pending',
             'done'         => 'badge-status-active',
             'paused_ready' => 'badge-status-created',
+            'active'       => 'badge-status-active',
             'error'        => 'badge-status-rejected',
             default      => 'badge-status-draft',
         };
