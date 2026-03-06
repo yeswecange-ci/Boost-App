@@ -11,6 +11,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\PageAssignmentController;
+use App\Http\Controllers\FacebookPageController;
 
 Route::get('/', fn() => redirect()->route('login'));
 
@@ -72,6 +73,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/boost/create',          [BoostController::class, 'create'])->name('boost.create');
         Route::post('/boost',                [BoostController::class, 'store'])->name('boost.store');
         Route::post('/boost/{boost}/submit', [BoostController::class, 'submit'])->name('boost.submit');
+    });
+
+    // ─── Pages Facebook (admin only) ─────────────────────────
+    Route::middleware(['role:admin'])->prefix('admin')->name('admin.facebook-pages.')->group(function () {
+        Route::get('/facebook-pages',                    [FacebookPageController::class, 'index'])->name('index');
+        Route::post('/facebook-pages/import',            [FacebookPageController::class, 'import'])->name('import');
+        Route::post('/facebook-pages',                   [FacebookPageController::class, 'store'])->name('store');
+        Route::get('/facebook-pages/{page}/edit',        [FacebookPageController::class, 'edit'])->name('edit');
+        Route::put('/facebook-pages/{page}',             [FacebookPageController::class, 'update'])->name('update');
+        Route::post('/facebook-pages/{page}/toggle',     [FacebookPageController::class, 'toggle'])->name('toggle');
     });
 
     // ─── Page Assignments (admin only) ───────────────────────

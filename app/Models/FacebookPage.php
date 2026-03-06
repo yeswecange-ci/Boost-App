@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FacebookPage extends Model
 {
@@ -18,5 +19,10 @@ class FacebookPage extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'facebook_page_user');
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(FacebookPost::class, 'facebook_page_id');
     }
 }

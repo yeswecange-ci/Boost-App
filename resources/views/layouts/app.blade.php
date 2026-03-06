@@ -124,6 +124,11 @@
             <span class="icon"><i class="fas fa-users"></i></span>
             Utilisateurs
         </a>
+        <a href="{{ route('admin.facebook-pages.index') }}"
+           class="sidebar-item {{ request()->routeIs('admin.facebook-pages.*') ? 'active' : '' }}">
+            <span class="icon"><i class="fab fa-facebook-square"></i></span>
+            Pages Facebook
+        </a>
         <a href="{{ route('page-assignments.index') }}"
            class="sidebar-item {{ request()->routeIs('page-assignments.*') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-sitemap"></i></span>
