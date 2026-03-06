@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Boost Manager — Spécification Technique Application Mobile</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary:       #4f46e5;
+    --primary-light: #eef2ff;
+    --primary-dark:  #3730a3;
+    --accent:        #7c3aed;
+    --success:       #16a34a;
+    --success-light: #dcfce7;
+    --warning:       #d97706;
+    --warning-light: #fef3c7;
+    --danger:        #dc2626;
+    --danger-light:  #fee2e2;
+    --info:          #0284c7;
+    --info-light:    #e0f2fe;
+    --gray-50:       #f8fafc;
+    --gray-100:      #f1f5f9;
+    --gray-200:      #e2e8f0;
+    --gray-300:      #cbd5e1;
+    --gray-400:      #94a3b8;
+    --gray-500:      #64748b;
+    --gray-700:      #334155;
+    --gray-900:      #0f172a;
+    --font:          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:        8px;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  body {
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--gray-700);
+    background: #fff;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 48px;
+  }
+
+  /* ── Cover ────────────────────────────────────────────── */
+  .cover {
+    text-align: center;
+    padding: 80px 0 60px;
+    border-bottom: 3px solid var(--primary);
+    margin-bottom: 60px;
+    page-break-after: always;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+  .cover h1 {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+  .cover h2 {
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--gray-500);
+    margin-bottom: 40px;
+  }
+  .cover-meta {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 32px;
+    font-size: 13px;
+    color: var(--gray-500);
+  }
+  .cover-meta strong { color: var(--gray-700); display: block; margin-bottom: 2px; }
+
+  /* ── TOC ──────────────────────────────────────────────── */
+  .toc {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 32px 36px;
+    margin-bottom: 48px;
+    page-break-after: always;
+  }
+  .toc h2 { font-size: 16px; font-weight: 700; color: var(--gray-900); margin-bottom: 20px; }
+  .toc ol { padding-left: 20px; }
+  .toc > ol > li { margin-bottom: 6px; font-weight: 600; color: var(--gray-900); font-size: 13.5px; }
+  .toc > ol > li > ol { margin-top: 4px; padding-left: 18px; }
+  .toc > ol > li > ol > li { font-weight: 400; color: var(--gray-500); font-size: 13px; margin-bottom: 2px; }
+
+  /* ── Section headings ─────────────────────────────────── */
+  h1.section { font-size: 26px; font-weight: 800; color: var(--gray-900); margin: 48px 0 4px; padding-top: 48px; border-top: 2px solid var(--gray-200); }
+  h1.section .num { color: var(--primary); margin-right: 8px; }
+  .section-lead { color: var(--gray-500); font-size: 14px; margin-bottom: 28px; }
+  h2.sub { font-size: 18px; font-weight: 700; color: var(--gray-900); margin: 32px 0 12px; }
+  h3.sub { font-size: 15px; font-weight: 600; color: var(--gray-700); margin: 24px 0 8px; }
+  h4.sub { font-size: 13.5px; font-weight: 600; color: var(--primary); margin: 16px 0 6px; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* ── Inline elements ──────────────────────────────────── */
+  p { margin-bottom: 12px; }
+  strong { font-weight: 600; color: var(--gray-900); }
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12.5px;
+    background: var(--gray-100);
+    color: #c026d3;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  pre {
+    background: var(--gray-900);
+    color: #e2e8f0;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 12px 0 20px;
+  }
+  pre .comment { color: #64748b; }
+  pre .key { color: #93c5fd; }
+  pre .val { color: #86efac; }
+  pre .kw { color: #c084fc; }
+  pre .str { color: #fcd34d; }
+
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+
+  /* ── Cards / Callouts ─────────────────────────────────── */
+  .callout {
+    border-left: 4px solid var(--primary);
+    background: var(--primary-light);
+    padding: 14px 18px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    margin: 16px 0;
+    font-size: 13.5px;
+  }
+  .callout.warn { border-color: var(--warning); background: var(--warning-light); }
+  .callout.success { border-color: var(--success); background: var(--success-light); }
+  .callout.danger { border-color: var(--danger); background: var(--danger-light); }
+  .callout strong { color: var(--gray-900); }
+
+  /* ── Tables ───────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 13px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+  }
+  thead th {
+    background: var(--gray-50);
+    color: var(--gray-500);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: top;
+    color: var(--gray-700);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray-50); }
+
+  /* ── Role badges ──────────────────────────────────────── */
+  .role {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 2px 10px;
+    white-space: nowrap;
+  }
+  .role-admin    { background: #ddd6fe; color: #5b21b6; }
+  .role-n1       { background: #bfdbfe; color: #1d4ed8; }
+  .role-n2       { background: #c7d2fe; color: #4338ca; }
+  .role-operator { background: #bbf7d0; color: #15803d; }
+  .role-validator{ background: #fde68a; color: #92400e; }
+
+  /* ── Status badges ────────────────────────────────────── */
+  .status {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 2px 10px;
+  }
+  .s-draft    { background: #f1f5f9; color: #475569; }
+  .s-pending  { background: #fef3c7; color: #92400e; }
+  .s-approved { background: #dbeafe; color: #1e40af; }
+  .s-rejected { background: #fee2e2; color: #991b1b; }
+  .s-running  { background: #f0fdf4; color: #166534; }
+  .s-paused   { background: #e0e7ff; color: #3730a3; }
+  .s-active   { background: #dcfce7; color: #14532d; }
+  .s-error    { background: #fee2e2; color: #991b1b; }
+
+  /* ── Screen card ──────────────────────────────────────── */
+  .screen-card {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .screen-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--gray-50);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .screen-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .screen-title { font-weight: 700; font-size: 14px; color: var(--gray-900); }
+  .screen-route { font-size: 12px; color: var(--gray-400); font-family: monospace; }
+  .screen-body { padding: 14px 16px; font-size: 13px; }
+  .screen-body ul { margin-bottom: 6px; }
+
+  /* ── Color palette ────────────────────────────────────── */
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--gray-500);
+    font-family: monospace;
+  }
+  .swatch-color {
+    width: 56px; height: 40px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,.08);
+  }
+
+  /* ── Flow diagram ─────────────────────────────────────── */
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 20px 0;
+    font-size: 12.5px;
+  }
+  .flow-step {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 500;
+    color: var(--gray-700);
+    white-space: nowrap;
+  }
+  .flow-step.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+  .flow-arrow {
+    padding: 0 6px;
+    color: var(--gray-400);
+    font-size: 16px;
+  }
+
+  /* ── API block ────────────────────────────────────────── */
+  .api-block {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .api-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .method {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+  .m-get  { background: #dcfce7; color: #14532d; }
+  .m-post { background: #dbeafe; color: #1e40af; }
+  .m-put  { background: #fef3c7; color: #92400e; }
+  .m-del  { background: #fee2e2; color: #991b1b; }
+  .api-path { font-family: monospace; font-size: 13px; font-weight: 500; color: var(--gray-900); }
+  .api-desc { font-size: 12px; color: var(--gray-500); }
+  .api-body { padding: 10px 14px; font-size: 12.5px; }
+  .api-auth { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 4px; background: #fce7f3; color: #9d174d; }
+  .api-roles { font-size: 11px; color: var(--gray-400); }
+
+  /* ── Print ────────────────────────────────────────────── */
+  @media print {
+    body { padding: 20px 24px; font-size: 12px; }
+    .cover { padding: 40px 0 30px; }
+    h1.section { page-break-before: always; }
+    .screen-card, .api-block, table { page-break-inside: avoid; }
+    pre { font-size: 10.5px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     COVER
+══════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">Document Technique — v1.0</div>
+  <h1>Boost Manager</h1>
+  <h2>Spécification Technique — Application Mobile</h2>
+  <p style="max-width:560px; margin:0 auto; color:var(--gray-500); font-size:14px; line-height:1.7;">
+    Ce document décrit l'architecture complète, le schéma de base de données,
+    les endpoints API REST, les écrans par rôle et la charte graphique
+    de l'application mobile Boost Manager.
+  </p>
+  <div class="cover-meta">
+    <div><strong>Projet</strong>YesWeCange — Boost Manager</div>
+    <div><strong>Date</strong>Mars 2026</div>
+    <div><strong>Stack Web</strong>Laravel 11 / MySQL 8</div>
+    <div><strong>Base de données</strong>Partagée web + mobile</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TABLE DES MATIÈRES
+══════════════════════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Table des matières</h2>
+  <ol>
+    <li>Vue d'ensemble
+      <ol><li>Objectif de l'application</li><li>Rôles utilisateurs</li><li>Flux de validation</li></ol>
+    </li>
+    <li>Charte graphique
+      <ol><li>Palette de couleurs</li><li>Typographie</li><li>Composants UI</li></ol>
+    </li>
+    <li>Architecture technique
+      <ol><li>Infrastructure</li><li>Authentification mobile (Laravel Sanctum)</li><li>Base de données partagée</li></ol>
+    </li>
+    <li>Schéma de base de données
+      <ol><li>Tables principales</li><li>Tables de validation</li><li>Tables Meta/Sync</li><li>Tables système</li></ol>
+    </li>
+    <li>API REST
+      <ol><li>Authentification</li><li>Dashboard</li><li>Posts Facebook</li><li>Campagnes Media Buyer</li><li>Validation</li><li>Notifications</li><li>Utilisateurs &amp; Pages</li></ol>
+    </li>
+    <li>Écrans par rôle
+      <ol><li>Opérateur</li><li>Validateur N+1</li><li>Validateur N+2</li><li>Admin</li></ol>
+    </li>
+    <li>Notifications push</li>
+    <li>Considérations techniques mobiles</li>
+  </ol>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     1. VUE D'ENSEMBLE
+══════════════════════════════════════════════════════════════ -->
+<h1 class="section"><span class="num">1.</span> Vue d'ensemble</h1>
+<p class="section-lead">Contexte métier, rôles et flux de validation.</p>
+
+<h2 class="sub">1.1 Objectif de l'application</h2>
+<p>
+  Boost Manager est une plateforme de gestion de campagnes publicitaires Meta/Facebook pour les équipes Media Buyer.
+  L'application permet aux opérateurs de créer des demandes de boost sur des posts Facebook,
+  de les soumettre à une chaîne de validation N+1 → N+2, puis de déclencher la création
+  automatique de campagnes sur Meta Ads via N8N.
+</p>
+<div class="callout">
+  <strong>Principe fondamental :</strong> Chaque utilisateur (opérateur, validateur)
+  n'est visible que sur les pages Facebook qui lui sont assignées. Seul l'admin voit tout.
+</div>
+
+<h2 class="sub">1.2 Rôles utilisateurs</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Rôle</th>
+      <th>Identifiant</th>
+      <th>Capacités principales</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="role role-admin">Admin</span></td>
+      <td><code>admin</code></td>
+      <td>Accès total — gestion utilisateurs, pages, paramètres N8N/Meta, bypass validation</td>
+    </tr>
+    <tr>
+      <td><span class="role role-operator">Opérateur</span></td>
+      <td><code>operator</code></td>
+      <td>Crée des campagnes sur ses pages assignées, soumet pour validation, lance le boost, active sur Meta</td>
+    </tr>
+    <tr>
+      <td><span class="role role-n1">Validateur N+1</span></td>
+      <td><code>validator_n1</code></td>
+      <td>Approuve ou rejette les campagnes en <code>pending_n1</code> sur ses pages assignées</td>
+    </tr>
+    <tr>
+      <td><span class="role role-n2">Validateur N+2</span></td>
+      <td><code>validator_n2</code></td>
+      <td>Approuve ou rejette les campagnes en <code>pending_n2</code> sur ses pages assignées</td>
+    </tr>
+    <tr>
+      <td><span class="role role-validator">Validateur</span></td>
+      <td><code>validator</code></td>
+      <td>Cumule N+1 + N+2 (rôle polyvalent)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 class="sub">1.3 Flux de validation complet</h2>
+<div class="flow">
+  <div class="flow-step">Création<br/><small style="font-weight:400;color:var(--gray-400)">Opérateur</small></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step active">draft</div>
+  <div class="flow-arrow">→ Soumettre →</div>
+  <div class="flow-step active">pending_n1</div>
+  <div class="flow-arrow">→ Valider N+1 →</div>
+  <div class="flow-step active">pending_n2</div>
+  <div class="flow-arrow">→ Valider N+2 →</div>
+  <div class="flow-step active">approved</div>
+</div>
+<div class="flow" style="margin-top:8px;">
+  <div class="flow-step active">approved</div>
+  <div class="flow-arrow">→ Booster →</div>
+  <div class="flow-step active">running</div>
+  <div class="flow-arrow">→ N8N OK →</div>
+  <div class="flow-step active">paused_ready</div>
+  <div class="flow-arrow">→ Activer →</div>
+  <div class="flow-step active">active ✓</div>
+</div>
+<div class="callout warn" style="margin-top:12px;">
+  <strong>Rejet possible</strong> à toute étape de validation : la campagne repasse en
+  <code>rejected</code> et l'opérateur peut corriger et re-soumettre.
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     2. CHARTE GRAPHIQUE
+══════════════════════════════════════════════════════════════ -->
+<h1 class="section"><span class="num">2.</span> Charte graphique</h1>
+<p class="section-lead">Reproduire fidèlement le design de l'application web.</p>
+
+<h2 class="sub">2.1 Palette de couleurs</h2>
+<div class="palette">
+  <div class="swatch"><div class="swatch-color" style="background:#4f46e5;"></div>#4f46e5<br/><span style="font-size:10px;color:#9ca3af;">Primary</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#4338ca;"></div>#4338ca<br/><span style="font-size:10px;color:#9ca3af;">Primary Dark</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#eef2ff;"></div>#eef2ff<br/><span style="font-size:10px;color:#9ca3af;">Primary Light</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#7c3aed;"></div>#7c3aed<br/><span style="font-size:10px;color:#9ca3af;">Accent Violet</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#f8fafc;"></div>#f8fafc<br/><span style="font-size:10px;color:#9ca3af;">Page BG</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#0f172a;"></div>#0f172a<br/><span style="font-size:10px;color:#9ca3af;">Heading</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#64748b;"></div>#64748b<br/><span style="font-size:10px;color:#9ca3af;">Muted</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#e2e8f0;"></div>#e2e8f0<br/><span style="font-size:10px;color:#9ca3af;">Border</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#16a34a;"></div>#16a34a<br/><span style="font-size:10px;color:#9ca3af;">Success</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#dc2626;"></div>#dc2626<br/><span style="font-size:10px;color:#9ca3af;">Danger</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#d97706;"></div>#d97706<br/><span style="font-size:10px;color:#9ca3af;">Warning</span></div>
+  <div class="swatch"><div class="swatch-color" style="background:#0284c7;"></div>#0284c7<br/><span style="font-size:10px;color:#9ca3af;">Info</span></div>
+</div>
+
+<h3 class="sub">Badges de statut</h3>
+<table>
+  <thead><tr><th>Statut</th><th>Badge</th><th>Background</th><th>Texte</th></tr></thead>
+  <tbody>
+    <tr><td><code>draft</code></td><td><span class="status s-draft">Brouillon</span></td><td>#f1f5f9</td><td>#475569</td></tr>
+    <tr><td><code>pending_n1</code> / <code>pending_n2</code></td><td><span class="status s-pending">En attente</span></td><td>#fef3c7</td><td>#92400e</td></tr>
+    <tr><td><code>approved</code></td><td><span class="status s-approved">Approuvée</span></td><td>#dbeafe</td><td>#1e40af</td></tr>
+    <tr><td><code>rejected</code></td><td><span class="status s-rejected">Rejetée</span></td><td>#fee2e2</td><td>#991b1b</td></tr>
+    <tr><td><code>running</code></td><td><span class="status s-running">En cours…</span></td><td>#f0fdf4</td><td>#166534</td></tr>
+    <tr><td><code>paused_ready</code></td><td><span class="status s-paused">Créée PAUSED</span></td><td>#e0e7ff</td><td>#3730a3</td></tr>
+    <tr><td><code>active</code></td><td><span class="status s-active">Active</span></td><td>#dcfce7</td><td>#14532d</td></tr>
+    <tr><td><code>error</code></td><td><span class="status s-error">Erreur</span></td><td>#fee2e2</td><td>#991b1b</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub">2.2 Typographie</h2>
+<table>
+  <thead><tr><th>Usage</th><th>Police</th><th>Taille</th><th>Poids</th></tr></thead>
+  <tbody>
+    <tr><td>Corps / paragraphes</td><td>Inter</td><td>14px</td><td>400</td></tr>
+    <tr><td>Labels / captions</td><td>Inter</td><td>12–13px</td><td>400–500</td></tr>
+    <tr><td>Titres de section</td><td>Inter</td><td>18–22px</td><td>700</td></tr>
+    <tr><td>Titres principaux</td><td>Inter</td><td>24–28px</td><td>800</td></tr>
+    <tr><td>Code / IDs Meta</td><td>JetBrains Mono / monospace</td><td>12–13px</td><td>400</td></tr>
+    <tr><td>KPI values</td><td>Inter</td><td>24–32px</td><td>700</td></tr>
+    <tr><td>Badges / tags</td><td>Inter</td><td>11–12px</td><td>600</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub">2.3 Composants UI recommandés</h2>
+<ul>
+  <li><strong>Boutons :</strong> Primaire (indigo), Secondaire (outline), Danger (rouge), Succès (vert), petit/normal</li>
+  <li><strong>Cards :</strong> fond blanc, bordure #e2e8f0, radius 8px, shadow légère (0 1px 3px rgba(0,0,0,.08))</li>
+  <li><strong>Stat-cards (KPI) :</strong> icône dans carré coloré à gauche + valeur en grand + label en dessous</li>
+  <li><strong>Alertes :</strong> bandeau coloré avec icône (succès/danger/warning/info)</li>
+  <li><strong>Tableaux :</strong> header gris, lignes zébrées au hover, police 13px</li>
+  <li><strong>Formulaires :</strong> labels au-dessus, input pleine largeur, border focus primary, messages d'erreur rouge 12px</li>
+  <li><strong>Bottom Navigation :</strong> 4–5 onglets avec icônes Font Awesome 6</li>
+  <li><strong>Pull-to-refresh</strong> sur toutes les listes</li>
+  <li><strong>Skeleton loaders</strong> pendant le chargement des données</li>
+</ul>
+<div class="callout">
+  <strong>Icônes :</strong> Utiliser <strong>Font Awesome 6</strong> (même bibliothèque que le web).
+  Icônes clés : <code>fa-rocket</code> (boost), <code>fa-bullhorn</code> (campagne),
+  <code>fa-check</code> (validation), <code>fa-times</code> (rejet), <code>fa-bell</code> (notifications),
+  <code>fa-layer-group</code> (exécution), <code>fa-play</code> (activer).
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     3. ARCHITECTURE TECHNIQUE
+══════════════════════════════════════════════════════════════ -->
+<h1 class="section"><span class="num">3.</span> Architecture technique</h1>
+<p class="section-lead">L'app mobile consomme une API REST Laravel avec authentification Sanctum.</p>
+
+<h2 class="sub">3.1 Infrastructure</h2>
+<table>
+  <thead><tr><th>Composant</th><th>Technologie</th><th>Rôle</th></tr></thead>
+  <tbody>
+    <tr><td>Backend</td><td>Laravel 11 (PHP 8.3)</td><td>API REST + logique métier</td></tr>
+    <tr><td>Base de données</td><td>MySQL 8.0</td><td>Partagée web + mobile — une seule BDD</td></tr>
+    <tr><td>Authentification mobile</td><td>Laravel Sanctum</td><td>Tokens API (Bearer)</td></tr>
+    <tr><td>Push notifications</td><td>Firebase FCM</td><td>Notifications temps réel mobile</td></tr>
+    <tr><td>Orchestration</td><td>N8N</td><td>Création campagnes Meta Ads (workflow existant)</td></tr>
+    <tr><td>Publicité</td><td>Meta Graph API v23.0</td><td>Création et activation Campaign/AdSet/Ad</td></tr>
+    <tr><td>App mobile</td><td>React Native / Flutter (au choix)</td><td>iOS + Android</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub">3.2 Authentification (Laravel Sanctum)</h2>
+<p>L'app mobile utilise des <strong>tokens Sanctum</strong> (Personal Access Tokens).
+Chaque appel API doit inclure l'en-tête :</p>
+<pre><span class="key">Authorization</span><span class="val">: Bearer {token}</span>
+<span class="key">Accept</span><span class="val">: application/json</span>
+<span class="key">Content-Type</span><span class="val">: application/json</span></pre>
+
+<p>À implémenter dans Laravel :</p>
+<ul>
+  <li>Installer Sanctum : <code>php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"</code></li>
+  <li>Ajouter colonne <code>fcm_token</code> dans la table <code>users</code> pour les push notifications</li>
+  <li>Créer le groupe de routes <code>api</code> avec prefix <code>/api/v1</code></li>
+  <li>Retourner <strong>toujours</strong> du JSON avec le format uniforme ci-dessous</li>
+</ul>
+
+<h3 class="sub">Format de réponse uniforme</h3>
+<pre><span class="comment">// Succès</span>
+{
+  <span class="key">"success"</span>: <span class="val">true</span>,
+  <span class="key">"data"</span>: { <span class="comment">/* objet ou tableau */</span> },
+  <span class="key">"meta"</span>: { <span class="key">"current_page"</span>: 1, <span class="key">"last_page"</span>: 5, <span class="key">"total"</span>: 48 } <span class="comment">// pagination si applicable</span>
+}
+
+<span class="comment">// Erreur</span>
+{
+  <span class="key">"success"</span>: <span class="val">false</span>,
+  <span class="key">"message"</span>: <span class="str">"Message d'erreur lisible"</span>,
+  <span class="key">"errors"</span>: { <span class="key">"field"</span>: [<span class="str">"validation error"</span>] } <span class="comment">// optionnel, erreurs de validation</span>
+}</pre>
+
+<h2 class="sub">3.3 Base de données partagée</h2>
+<div class="callout success">
+  <strong>Principe :</strong> L'application mobile <strong>n'a pas sa propre base de données</strong>.
+  Elle accède exactement à la même base MySQL que l'application web via les API Laravel.
+  Aucune migration supplémentaire n'est nécessaire, sauf l'ajout de la colonne <code>fcm_token</code>.
+</div>
+<p>Migration à ajouter côté Laravel :</p>
+<pre><span class="kw">Schema</span>::<span class="val">table</span>(<span class="str">'users'</span>, <span class="kw">function</span> (Blueprint $table) {
+    $table-><span class="val">string</span>(<span class="str">'fcm_token'</span>)-><span class="val">nullable</span>(); <span class="comment">// Firebase push token</span>
+});</pre>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     4. SCHÉMA BASE DE DONNÉES
+══════════════════════════════════════════════════════════════ -->
+<h1 class="section"><span class="num">4.</span> Schéma de base de données</h1>
+<p class="section-lead">Toutes les tables accessibles via l'API. La mobile lit/écrit via les endpoints REST uniquement.</p>
+
+<h2 class="sub">4.1 Table <code>users</code></h2>
+<table>
+  <thead><tr><th>Colonne</th><th>Type</th><th>Nullable</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>id</code></td><td>bigint PK</td><td>non</td><td>Identifiant unique</td></tr>
+    <tr><td><code>name</code></td><td>varchar(255)</td><td>non</td><td>Nom complet</td></tr>
+    <tr><td><code>email</code></td><td>varchar unique</td><td>non</td><td>Email de connexion</td></tr>
+    <tr><td><code>password</code></td><td>varchar</td><td>non</td><td>Hash bcrypt (hidden)</td></tr>
+    <tr><td><code>phone</code></td><td>varchar</td><td>oui</td><td>Téléphone</td></tr>
+    <tr><td><code>avatar</code></td><td>varchar</td><td>oui</td><td>URL avatar</td></tr>
+    <tr><td><code>is_active</code></td><td>boolean</td><td>non</td><td>Compte actif/bloqué</td></tr>
+    <tr><td><code>fcm_token</code></td><td>varchar</td><td>oui</td><td><strong>À ajouter</strong> — Firebase push token</td></tr>
+  </tbody>
+</table>
+<p>Relations : rôles Spatie via <code>model_has_roles</code> + pages assignées via <code>facebook_page_user</code>.</p>
+
+<h2 class="sub">4.2 Table <code>boost_campaigns</code> (principale)</h2>
+<table>
+  <thead><tr><th>Colonne</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>id</code></td><td>bigint PK</td><td>ID unique</td></tr>
+    <tr><td><code>user_id</code></td><td>bigint FK users</td><td>Opérateur propriétaire</td></tr>
+    <tr><td><code>post_id</code></td><td>varchar(100)</td><td>ID du post Facebook (format PAGE_ID_POST_ID)</td></tr>
+    <tr><td><code>campaign_name</code></td><td>varchar(255)</td><td>Nom de la campagne</td></tr>
+    <tr><td><code>campaign_objective</code></td><td>varchar(100)</td><td>Ex: OUTCOME_TRAFFIC, OUTCOME_AWARENESS</td></tr>
+    <tr><td><code>special_ad_categories</code></td><td>varchar(50)</td><td>NONE, HOUSING, EMPLOYMENT, etc.</td></tr>
+    <tr><td><code>campaign_status</code></td><td>varchar(20)</td><td>PAUSED ou ACTIVE (statut initial Meta)</td></tr>
+    <tr><td><code>existing_campaign_id</code></td><td>varchar(100) nullable</td><td>ID campagne Meta existante (optionnel)</td></tr>
+    <tr><td><code>adset_name</code></td><td>varchar(255)</td><td>Nom de l'ad set</td></tr>
+    <tr><td><code>budget_type</code></td><td>varchar(30)</td><td>lifetime_budget ou daily_budget</td></tr>
+    <tr><td><code>budget_value</code></td><td>unsignedInt</td><td>Montant en FCFA</td></tr>
+    <tr><td><code>duration_days</code></td><td>unsignedInt</td><td>Durée en jours</td></tr>
+    <tr><td><code>countries</code></td><td>json</td><td>Tableau de codes pays : ["CI","SN","ML"]</td></tr>
+    <tr><td><code>interests</code></td><td>json nullable</td><td>Intérêts de ciblage</td></tr>
+    <tr><td><code>optimization_goal</code></td><td>varchar(50)</td><td>LINK_CLICKS, REACH, etc.</td></tr>
+    <tr><td><code>billing_event</code></td><td>varchar(50)</td><td>IMPRESSIONS, LINK_CLICKS, etc.</td></tr>
+    <tr><td><code>bid_strategy</code></td><td>varchar(50)</td><td>LOWEST_COST_WITHOUT_CAP, etc.</td></tr>
+    <tr><td><code>ad_name</code></td><td>varchar(255)</td><td>Nom de l'annonce</td></tr>
+    <tr><td><code>ad_status</code></td><td>varchar(20)</td><td>PAUSED ou ACTIVE</td></tr>
+    <tr><td><code>execution_status</code></td><td>varchar(20)</td><td>Statut interne (voir §1.3)</td></tr>
+    <tr><td><code>meta_campaign_id</code></td><td>varchar(100) nullable</td><td>ID campagne créée sur Meta</td></tr>
+    <tr><td><code>meta_adset_id</code></td><td>varchar(100) nullable</td><td>ID ad set créé sur Meta</td></tr>
+    <tr><td><code>meta_ad_id</code></td><td>varchar(100) nullable</td><td>ID annonce créée sur Meta</td></tr>
+    <tr><td><code>error_message</code></td><td>text nullable</td><td>Message d'erreur N8N ou Meta</td></tr>
+    <tr><td><code>launched_at</code></td><td>timestamp nullable</td><td>Date de lancement effectif</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub">4.3 Table <code>posts_master</code> (facebook_posts)</h2>
+<table>
+  <thead><tr><th>Colonne</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>id</code></td><td>bigint PK</td><td></td></tr>
+    <tr><td><code>post_id</code></td><td>varchar unique</td><td>ID Facebook du post</td></tr>
+    <tr><td><code>facebook_page_id</code></td><td>bigint FK</td><td>Page Facebook parente</td></tr>
+    <tr><td><code>message</code></td><td>text</td><td>Texte du post</td></tr>
+    <tr><td><code>thumbnail_url</code></td><td>text nullable</td><td>Image de prévisualisation</td></tr>
+    <tr><td><code>permalink_url</code></td><td>text</td><td>Lien Facebook permanent</td></tr>
+    <tr><td><code>type</code></td><td>enum(photo,video,link,status)</td><td>Type de post</td></tr>
+    <tr><td><code>impressions</code></td><td>bigint</td><td>Nombre d'impressions</td></tr>
+    <tr><td><code>posted_at</code></td><td>timestamp</td><td>Date de publication Facebook</td></tr>
+    <tr><td><code>is_boostable</code></td><td>tinyint</td><td>1 si boostable, 0 sinon</td></tr>
+    <tr><td><code>fb_status</code></td><td>enum(FB_OK, FB_DELETED_OR_UNAVAILABLE, FB_ERROR)</td><td>État côté Facebook</td></tr>
+    <tr><td><code>business_status</code></td><td>enum(ACTIVE, INACTIVE, ARCHIVED)</td><td>État métier</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub">4.4 Table <code>facebook_pages</code></h2>
+<table>
+  <thead><tr><th>Colonne</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>id</code></td><td>bigint PK</td><td></td></tr>
+    <tr><td><code>page_id</code></td><td>varchar unique</td><td>ID Facebook de la page</td></tr>
+    <tr><td><code>page_name</code></td><td>varchar</td><td>Nom affiché</td></tr>
+    <tr><td><code>ad_account_id</code></td><td>varchar</td><td>Compte pub Meta (act_XXXXXXXXX)</td></tr>
+    <tr><td><code>access_token</code></td><td>text hidden</td><td>Token Meta (jamais exposé via API)</td></tr>
+    <tr><td><code>instagram_account_id</code></td><td>varchar nullable</td><td>Compte Instagram lié</td></tr>
+    <tr><td><code>is_active</code></td><td>boolean</td><td>Page active dans l'app</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub">4.5 Tables système</h2>
+<table>
+  <thead><tr><th>Table</th><th>Rôle</th></tr></thead>
+  <tbody>
+    <tr><td><code>facebook_page_user</code></td><td>Pivot users ↔ pages (user_id, facebook_page_id)</td></tr>
+    <tr><td><code>notifications</code></td><td>Notifications Laravel (uuid, type, data JSON, read_at)</td></tr>
+    <tr><td><code>roles</code> / <code>model_has_roles</code></td><td>Spatie permissions — rôles attribués aux users</td></tr>
+    <tr><td><code>settings</code></td><td>Config app (clé/valeur) : URLs N8N, secrets, mock mode</td></tr>
+    <tr><td><code>sync_runs</code></td><td>Historique des synchronisations Facebook</td></tr>
+  </tbody>
+</table>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     5. API REST
+══════════════════════════════════════════════════════════════ -->
+<h1 class="section"><span class="num">5.</span> API REST</h1>
+<p class="section-lead">
+  Tous les endpoints sont préfixés <code>/api/v1</code>.
+  Les endpoints protégés nécessitent le header <code>Authorization: Bearer {token}</code>.
+</p>
+
+<h2 class="sub">5.1 Authentification</h2>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/auth/login</span>
+    <span class="api-desc">— Connexion, retourne le token Sanctum</span>
+  </div>
+  <div class="api-body">
+    <strong>Body :</strong> <code>email</code>, <code>password</code>, <code>fcm_token</code> (optionnel, stocker le token Firebase)<br/>
+    <strong>Réponse :</strong> <code>token</code> (string), <code>user</code> (objet avec <code>id</code>, <code>name</code>, <code>email</code>, <code>roles</code>, <code>avatar</code>)
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/auth/logout</span>
+    <span class="api-desc">— Révoke le token courant</span>
+    <span class="api-auth">Auth</span>
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-get">GET</span>
+    <span class="api-path">/api/v1/auth/me</span>
+    <span class="api-desc">— Profil utilisateur + rôles + pages assignées</span>
+    <span class="api-auth">Auth</span>
+  </div>
+  <div class="api-body">
+    <strong>Réponse :</strong> user object avec <code>roles</code> (tableau), <code>facebook_pages</code> (pages assignées), <code>unread_notifications_count</code>
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-put">PUT</span>
+    <span class="api-path">/api/v1/auth/fcm-token</span>
+    <span class="api-desc">— Met à jour le token Firebase push</span>
+    <span class="api-auth">Auth</span>
+  </div>
+  <div class="api-body">
+    <strong>Body :</strong> <code>fcm_token</code> (string, required)
+  </div>
+</div>
+
+<h2 class="sub">5.2 Dashboard</h2>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-get">GET</span>
+    <span class="api-path">/api/v1/dashboard</span>
+    <span class="api-desc">— KPIs + campagnes récentes</span>
+    <span class="api-auth">Auth</span>
+  </div>
+  <div class="api-body">
+    <strong>Réponse :</strong>
+    <pre><span class="comment">// Filtré selon le rôle et les pages assignées</span>
+{
+  <span class="key">"counts"</span>: {
+    <span class="key">"total"</span>: 42, <span class="key">"draft"</span>: 5, <span class="key">"pending_n1"</span>: 3, <span class="key">"pending_n2"</span>: 2,
+    <span class="key">"approved"</span>: 8, <span class="key">"done"</span>: 20, <span class="key">"error"</span>: 4
+  },
+  <span class="key">"recent_campaigns"</span>: [<span class="comment">/* 5 dernières BoostCampaign */</span>],
+  <span class="key">"pending_validation_count"</span>: 5, <span class="comment">// pour les validateurs</span>
+  <span class="key">"last_sync"</span>: { <span class="key">"status"</span>: <span class="str">"FINISHED"</span>, <span class="key">"started_at"</span>: <span class="str">"..."</span> } <span class="comment">// pour admin/validators</span>
+}</pre>
+  </div>
+</div>
+
+<h2 class="sub">5.3 Posts Facebook</h2>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-get">GET</span>
+    <span class="api-path">/api/v1/posts</span>
+    <span class="api-desc">— Liste posts boostables (filtrés par pages assignées)</span>
+    <span class="api-auth">Auth</span>
+  </div>
+  <div class="api-body">
+    <strong>Query params :</strong> <code>page_id</code> (filtre page), <code>type</code> (photo/video/link), <code>search</code>, <code>per_page</code> (défaut 20)<br/>
+    <strong>Réponse :</strong> pagination avec items contenant : <code>post_id</code>, <code>message</code>, <code>thumbnail_url</code>, <code>permalink_url</code>, <code>type</code>, <code>posted_at</code>, <code>is_boostable</code>, <code>page</code> (nom de page)
+  </div>
+</div>
+
+<h2 class="sub">5.4 Campagnes Media Buyer</h2>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-get">GET</span>
+    <span class="api-path">/api/v1/campaigns</span>
+    <span class="api-desc">— Liste campagnes (filtrées par rôle + pages)</span>
+    <span class="api-auth">Auth</span>
+    <span class="api-roles">Tous rôles</span>
+  </div>
+  <div class="api-body">
+    <strong>Query params :</strong> <code>status</code> (filtre statut), <code>per_page</code>, <code>page</code><br/>
+    <strong>Réponse :</strong> pagination avec les champs de <code>boost_campaigns</code> + <code>status_label</code> + <code>budget_formatted</code> + <code>user</code> (nom opérateur pour les validators)
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-get">GET</span>
+    <span class="api-path">/api/v1/campaigns/{id}</span>
+    <span class="api-desc">— Détail d'une campagne</span>
+    <span class="api-auth">Auth</span>
+  </div>
+  <div class="api-body">
+    <strong>Réponse :</strong> campagne complète + <code>status_label</code> + <code>budget_formatted</code> + <code>user</code> + <code>post</code> (thumbnail, message)
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/campaigns</span>
+    <span class="api-desc">— Créer une campagne (brouillon)</span>
+    <span class="api-auth">Auth</span>
+    <span class="api-roles">operator, admin</span>
+  </div>
+  <div class="api-body">
+    <strong>Body (tous requis sauf mention) :</strong>
+    <pre>{
+  <span class="key">"post_id"</span>: <span class="str">"123456789_987654321"</span>,
+  <span class="key">"campaign_name"</span>: <span class="str">"Campagne Mars 2026"</span>,
+  <span class="key">"campaign_objective"</span>: <span class="str">"OUTCOME_TRAFFIC"</span>,
+  <span class="key">"special_ad_categories"</span>: <span class="str">"NONE"</span>,
+  <span class="key">"campaign_status"</span>: <span class="str">"PAUSED"</span>,
+  <span class="key">"existing_campaign_id"</span>: <span class="val">null</span>, <span class="comment">// optionnel</span>
+  <span class="key">"adset_name"</span>: <span class="str">"Ad Set Mars 2026"</span>,
+  <span class="key">"budget_type"</span>: <span class="str">"lifetime_budget"</span>,
+  <span class="key">"budget_value"</span>: 50000, <span class="comment">// en FCFA, min 500</span>
+  <span class="key">"duration_days"</span>: 7, <span class="comment">// 1–90</span>
+  <span class="key">"countries"</span>: [<span class="str">"CI"</span>, <span class="str">"SN"</span>],
+  <span class="key">"interests"</span>: [<span class="str">"Football"</span>, <span class="str">"Musique"</span>], <span class="comment">// optionnel</span>
+  <span class="key">"optimization_goal"</span>: <span class="str">"LINK_CLICKS"</span>,
+  <span class="key">"billing_event"</span>: <span class="str">"IMPRESSIONS"</span>,
+  <span class="key">"bid_strategy"</span>: <span class="str">"LOWEST_COST_WITHOUT_CAP"</span>,
+  <span class="key">"ad_name"</span>: <span class="str">"Annonce Mars 2026"</span>,
+  <span class="key">"ad_status"</span>: <span class="str">"PAUSED"</span>
+}</pre>
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/campaigns/{id}/submit</span>
+    <span class="api-desc">— Soumettre pour validation N+1</span>
+    <span class="api-auth">Auth</span>
+    <span class="api-roles">operator (propriétaire), admin</span>
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/campaigns/{id}/approve</span>
+    <span class="api-desc">— Approuver (N+1 → pending_n2, N+2 → approved)</span>
+    <span class="api-auth">Auth</span>
+    <span class="api-roles">validator_n1, validator_n2, validator, admin</span>
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/campaigns/{id}/reject</span>
+    <span class="api-desc">— Rejeter avec motif</span>
+    <span class="api-auth">Auth</span>
+    <span class="api-roles">validator_n1, validator_n2, validator, admin</span>
+  </div>
+  <div class="api-body">
+    <strong>Body :</strong> <code>reason</code> (string, requis, max 500 chars)
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/campaigns/{id}/launch</span>
+    <span class="api-desc">— Déclencher le boost via N8N (approved → running)</span>
+    <span class="api-auth">Auth</span>
+    <span class="api-roles">operator (propriétaire), admin</span>
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/campaigns/{id}/activate</span>
+    <span class="api-desc">— Activer sur Meta (paused_ready → active)</span>
+    <span class="api-auth">Auth</span>
+    <span class="api-roles">operator (propriétaire), admin</span>
+  </div>
+</div>
+
+<h2 class="sub">5.5 File de validation</h2>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-get">GET</span>
+    <span class="api-path">/api/v1/campaigns/pending</span>
+    <span class="api-desc">— Campagnes en attente de ma validation</span>
+    <span class="api-auth">Auth</span>
+    <span class="api-roles">validator_n1, validator_n2, validator, admin</span>
+  </div>
+  <div class="api-body">
+    N+1 voit <code>pending_n1</code>, N+2 voit <code>pending_n2</code>, admin/validator voient les deux.
+    Filtré par pages assignées.
+  </div>
+</div>
+
+<h2 class="sub">5.6 Notifications</h2>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-get">GET</span>
+    <span class="api-path">/api/v1/notifications</span>
+    <span class="api-desc">— Liste notifications (non lues en premier)</span>
+    <span class="api-auth">Auth</span>
+  </div>
+  <div class="api-body">
+    <strong>Réponse :</strong> <code>data</code> (liste), <code>unread_count</code> (int).<br/>
+    Chaque notification : <code>id</code>, <code>type</code>, <code>data.message</code>, <code>data.boost_id</code>, <code>read_at</code>, <code>created_at</code>
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/notifications/{id}/read</span>
+    <span class="api-desc">— Marquer une notification comme lue</span>
+    <span class="api-auth">Auth</span>
+  </div>
+</div>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-post">POST</span>
+    <span class="api-path">/api/v1/notifications/read-all</span>
+    <span class="api-desc">— Tout marquer comme lu</span>
+    <span class="api-auth">Auth</span>
+  </div>
+</div>
+
+<h2 class="sub">5.7 Pages Facebook</h2>
+
+<div class="api-block">
+  <div class="api-header">
+    <span class="method m-get">GET</span>
+    <span class="api-path">/api/v1/pages</span>
+    <span class="api-desc">— Pages Facebook accessibles à l'utilisateur</span>
+    <span class="api-auth">Auth</span>
+  </div>
+  <div class="api-body">
+    Admin : toutes les pages actives. Autres : pages assignées uniquement.<br/>
+    <strong>Réponse :</strong> <code>id</code>, <code>page_id</code>, <code>page_name</code>, <code>is_active</code> (<strong>pas</strong> de <code>access_token</code>)
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     6. ÉCRANS PAR RÔLE
+══════════════════════════════════════════════════════════════ -->
+<h1 class="section"><span class="num">6.</span> Écrans par rôle</h1>
+<p class="section-lead">Inventaire complet des écrans avec leur contenu attendu.</p>
+
+<h2 class="sub">Écrans communs (tous rôles)</h2>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">🔐</div>
+    <div>
+      <div class="screen-title">Connexion</div>
+      <div class="screen-route">Login Screen</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Logo Boost Manager + nom YesWeCange</li>
+      <li>Champs : Email, Mot de passe (toggle visibilité)</li>
+      <li>Bouton "Se connecter" (loader pendant la requête)</li>
+      <li>Gestion erreurs : "Email ou mot de passe incorrect", "Compte désactivé"</li>
+      <li>Stocker le token Sanctum + rôles dans le stockage sécurisé local</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">🏠</div>
+    <div>
+      <div class="screen-title">Dashboard</div>
+      <div class="screen-route">GET /api/v1/dashboard</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Grille de KPI cards (stat-cards) : Total, En attente, Approuvées, Créées, Erreurs</li>
+      <li>Pour validateurs : badge rouge "X campagnes à valider" avec lien direct</li>
+      <li>Liste des 5 dernières campagnes (nom, statut badge, budget)</li>
+      <li>Pour admin/validator : carte sync (dernière sync + statut)</li>
+      <li>Pull-to-refresh</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">🔔</div>
+    <div>
+      <div class="screen-title">Notifications</div>
+      <div class="screen-route">GET /api/v1/notifications</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Liste chronologique (non lues en premier, fond légèrement coloré)</li>
+      <li>Chaque item : icône type, message, temps relatif (il y a 2h)</li>
+      <li>Tap → marquer lue + naviguer vers la campagne concernée</li>
+      <li>Bouton "Tout marquer comme lu"</li>
+      <li>Badge rouge sur l'onglet navigation si notifications non lues</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">👤</div>
+    <div>
+      <div class="screen-title">Profil</div>
+      <div class="screen-route">GET /api/v1/auth/me</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Avatar circulaire + nom + email + badge(s) de rôle(s)</li>
+      <li>Chips/badges des pages assignées</li>
+      <li>Bouton déconnexion</li>
+    </ul>
+  </div>
+</div>
+
+<h2 class="sub">Rôle : Opérateur</h2>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">📋</div>
+    <div>
+      <div class="screen-title">Mes campagnes</div>
+      <div class="screen-route">GET /api/v1/campaigns</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Tabs de filtrage : Tout / Brouillon / En attente / Approuvée / Créée / Erreur</li>
+      <li>Chaque card : nom campagne, post_id, budget formaté (XX XXX FCFA), durée, badge statut coloré</li>
+      <li>FAB (+) pour créer une nouvelle campagne</li>
+      <li>Pull-to-refresh + pagination infinie (load more)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">🖼️</div>
+    <div>
+      <div class="screen-title">Sélection du post</div>
+      <div class="screen-route">GET /api/v1/posts</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Grille ou liste de posts boostables des pages assignées</li>
+      <li>Chaque item : thumbnail, extrait du message (2 lignes), badge type (photo/vidéo), date</li>
+      <li>Filtre par page Facebook</li>
+      <li>Barre de recherche (message du post)</li>
+      <li>Posts non boostables grisés avec raison au tap</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">➕</div>
+    <div>
+      <div class="screen-title">Créer une campagne (formulaire multi-étapes)</div>
+      <div class="screen-route">POST /api/v1/campaigns</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <strong>Étape 1 — Post sélectionné (aperçu)</strong>
+    <ul>
+      <li>Thumbnail + message + page + lien Facebook</li>
+    </ul>
+    <strong>Étape 2 — Campagne Meta</strong>
+    <ul>
+      <li>Nom campagne, Objectif (picker), Catégories spéciales (picker), Statut initial</li>
+      <li>Campagne existante (champ optionnel)</li>
+    </ul>
+    <strong>Étape 3 — Ad Set & Budget</strong>
+    <ul>
+      <li>Nom ad set, Type budget (lifetime/daily), Montant (FCFA), Durée (jours)</li>
+      <li>Objectif optimisation, Billing event, Bid strategy</li>
+    </ul>
+    <strong>Étape 4 — Ciblage</strong>
+    <ul>
+      <li>Sélection pays (multi-select avec flags)</li>
+      <li>Sélection intérêts (chips/tags sélectionnables)</li>
+    </ul>
+    <strong>Étape 5 — Annonce</strong>
+    <ul>
+      <li>Nom annonce, Statut annonce</li>
+      <li>Bouton "Enregistrer brouillon" + "Enregistrer &amp; soumettre"</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">📄</div>
+    <div>
+      <div class="screen-title">Détail campagne</div>
+      <div class="screen-route">GET /api/v1/campaigns/{id}</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li><strong>Header :</strong> nom + badge statut + budget formaté</li>
+      <li><strong>Sections collapsibles :</strong> Campagne, Ad Set, Ciblage (pays + intérêts), Annonce, IDs Meta</li>
+      <li><strong>Timeline de validation :</strong> Soumis → Validé N+1 → Validé N+2 → Boosté (steps visuels)</li>
+      <li><strong>Bandeau d'erreur</strong> si statut error ou rejected (message visible)</li>
+      <li><strong>Bandeau paused_ready :</strong> "Créée sur Meta en PAUSED — Tapez Activer pour lancer la diffusion"</li>
+      <li><strong>Actions contextuelles (selon statut) :</strong>
+        <ul>
+          <li>draft / rejected → "Soumettre"</li>
+          <li>approved → "Booster ce post"</li>
+          <li>paused_ready → "Activer sur Meta" (vert)</li>
+          <li>error → "Relancer" (admin uniquement)</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<h2 class="sub">Rôle : Validateur N+1 / N+2</h2>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">✅</div>
+    <div>
+      <div class="screen-title">File de validation</div>
+      <div class="screen-route">GET /api/v1/campaigns/pending</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Compteurs en haut : "N+1 (X)" et "N+2 (Y)" selon rôle</li>
+      <li>Liste de cards campagnes filtrées selon niveau</li>
+      <li>Chaque card : nom, opérateur, budget, durée, pays, date soumission</li>
+      <li>Swipe to action : swipe gauche → Rejeter / swipe droit → Approuver</li>
+      <li>Ou boutons Approuver/Rejeter dans chaque card</li>
+      <li>Tap → détail complet avant décision</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">❌</div>
+    <div>
+      <div class="screen-title">Modale de rejet</div>
+      <div class="screen-route">POST /api/v1/campaigns/{id}/reject</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Bottom sheet ou modale</li>
+      <li>Textarea : "Motif du rejet" (requis, max 500 caractères)</li>
+      <li>Bouton "Confirmer le rejet" (désactivé si vide)</li>
+      <li>Bouton "Annuler"</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">📊</div>
+    <div>
+      <div class="screen-title">Toutes les campagnes</div>
+      <div class="screen-route">GET /api/v1/campaigns</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Identique à la liste opérateur mais toutes campagnes des pages assignées</li>
+      <li>Colonne opérateur visible</li>
+      <li>Filtres par statut</li>
+    </ul>
+  </div>
+</div>
+
+<h2 class="sub">Rôle : Admin</h2>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">⚙️</div>
+    <div>
+      <div class="screen-title">Paramètres N8N &amp; Meta</div>
+      <div class="screen-route">GET/PUT /api/v1/settings</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Section N8N : URL webhook, secret, mock mode toggle, timeout</li>
+      <li>Section Meta : App ID, App Secret, token, version API</li>
+      <li>Boutons "Test N8N" et "Test Meta" pour vérifier la connectivité</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">👥</div>
+    <div>
+      <div class="screen-title">Gestion utilisateurs</div>
+      <div class="screen-route">GET /api/v1/admin/users</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Liste utilisateurs avec rôle, statut actif/inactif, pages assignées</li>
+      <li>Toggle actif/inactif</li>
+      <li>Vue en lecture seule (création/modification sur web recommandé)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="screen-card">
+  <div class="screen-card-header">
+    <div class="screen-icon">🗂️</div>
+    <div>
+      <div class="screen-title">Monitoring sync</div>
+      <div class="screen-route">GET /api/v1/sync-runs</div>
+    </div>
+  </div>
+  <div class="screen-body">
+    <ul>
+      <li>Historique des synchronisations Facebook (date, statut, page, durée)</li>
+      <li>Détail d'une sync : erreurs éventuelles, nombre de posts traités</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     7. NOTIFICATIONS PUSH
+══════════════════════════════════════════════════════════════ -->
+<h1 class="section"><span class="num">7.</span> Notifications push</h1>
+<p class="section-lead">Les notifications push complètent les notifications in-app via Firebase FCM.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Déclencheur</th>
+      <th>Destinataires</th>
+      <th>Titre push</th>
+      <th>Corps push</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Campagne soumise (pending_n1)</td>
+      <td>Validators N+1 de la page + admin</td>
+      <td>Nouvelle campagne à valider</td>
+      <td>"{nom}" soumise par {opérateur}</td>
+    </tr>
+    <tr>
+      <td>Validée N+1 → pending_n2</td>
+      <td>Validators N+2 de la page + admin</td>
+      <td>Validation N+2 requise</td>
+      <td>"{nom}" validée N+1 — votre validation requise</td>
+    </tr>
+    <tr>
+      <td>Campagne approuvée (N+2)</td>
+      <td>Opérateur propriétaire</td>
+      <td>Campagne approuvée ✓</td>
+      <td>"{nom}" approuvée — prête à booster !</td>
+    </tr>
+    <tr>
+      <td>Campagne rejetée</td>
+      <td>Opérateur propriétaire</td>
+      <td>Campagne rejetée</td>
+      <td>"{nom}" a été rejetée. Motif : {raison}</td>
+    </tr>
+    <tr>
+      <td>Boost lancé (running)</td>
+      <td>Opérateur + admin</td>
+      <td>Boost en cours…</td>
+      <td>N8N traite "{nom}" sur Meta Ads</td>
+    </tr>
+    <tr>
+      <td>Créée sur Meta (paused_ready)</td>
+      <td>Opérateur propriétaire</td>
+      <td>Campagne créée sur Meta</td>
+      <td>"{nom}" créée en PAUSED — tapez pour activer</td>
+    </tr>
+    <tr>
+      <td>Erreur N8N/Meta</td>
+      <td>Opérateur + admin</td>
+      <td>Erreur boost ⚠️</td>
+      <td>"{nom}" : {message erreur}</td>
+    </tr>
+    <tr>
+      <td>Campagne activée</td>
+      <td>Opérateur + admin</td>
+      <td>Campagne active ! 🚀</td>
+      <td>"{nom}" est maintenant en diffusion sur Meta</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <strong>Implémentation côté Laravel :</strong> Utiliser le channel <code>fcm</code> via
+  le package <code>laravel-notification-channels/fcm</code>.
+  Stocker le <code>fcm_token</code> dans la table <code>users</code>.
+  Lors de chaque login mobile, mettre à jour le token via <code>PUT /api/v1/auth/fcm-token</code>.
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     8. CONSIDÉRATIONS TECHNIQUES MOBILES
+══════════════════════════════════════════════════════════════ -->
+<h1 class="section"><span class="num">8.</span> Considérations techniques mobiles</h1>
+<p class="section-lead">Points d'attention pour le développement de l'app.</p>
+
+<h2 class="sub">8.1 Navigation</h2>
+<p>Structure recommandée en <strong>Bottom Tab Navigation</strong> :</p>
+<table>
+  <thead><tr><th>Onglet</th><th>Icône</th><th>Rôles visibles</th><th>Badge</th></tr></thead>
+  <tbody>
+    <tr><td>Dashboard</td><td><code>fa-home</code></td><td>Tous</td><td>—</td></tr>
+    <tr><td>Campagnes</td><td><code>fa-bullhorn</code></td><td>Tous</td><td>—</td></tr>
+    <tr><td>Valider</td><td><code>fa-check-circle</code></td><td>N+1, N+2, validator, admin</td><td>Nb en attente (rouge)</td></tr>
+    <tr><td>Notifications</td><td><code>fa-bell</code></td><td>Tous</td><td>Nb non lues (rouge)</td></tr>
+    <tr><td>Profil</td><td><code>fa-user</code></td><td>Tous</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub">8.2 Gestion des erreurs réseau</h2>
+<ul>
+  <li><strong>401 Unauthorized :</strong> Supprimer le token local → rediriger vers Login</li>
+  <li><strong>403 Forbidden :</strong> Toast "Vous n'avez pas la permission d'effectuer cette action"</li>
+  <li><strong>422 Unprocessable Entity :</strong> Afficher les erreurs de validation champ par champ</li>
+  <li><strong>500 Server Error :</strong> Toast "Erreur serveur, veuillez réessayer"</li>
+  <li><strong>Pas de réseau :</strong> Mode hors-ligne limité — afficher les données en cache, désactiver les actions</li>
+</ul>
+
+<h2 class="sub">8.3 Sécurité</h2>
+<ul>
+  <li>Stocker le token Sanctum dans le <strong>Keychain</strong> (iOS) / <strong>Keystore</strong> (Android) — jamais en AsyncStorage/SharedPreferences non chiffré</li>
+  <li>Le <code>access_token</code> Meta n'est <strong>jamais</strong> exposé via l'API — il reste côté serveur</li>
+  <li>HTTPS obligatoire en production</li>
+  <li>Rafraîchir le <code>fcm_token</code> à chaque démarrage de l'app</li>
+</ul>
+
+<h2 class="sub">8.4 Filtrage par page</h2>
+<div class="callout">
+  <strong>Important :</strong> Le filtrage par page assignée est <strong>entièrement géré côté serveur</strong>
+  par Laravel. L'app mobile n'a pas besoin de filtrer elle-même — les API retournent
+  déjà uniquement les données autorisées pour l'utilisateur connecté.
+  L'admin voit tout, les autres voient uniquement leurs pages assignées.
+</div>
+
+<h2 class="sub">8.5 Données de référence</h2>
+<p>Les listes suivantes sont des valeurs fixes à inclure dans l'app mobile (pas besoin d'API) :</p>
+
+<h4 class="sub">Pays disponibles</h4>
+<pre>CI: Côte d'Ivoire | SN: Sénégal | ML: Mali | BF: Burkina Faso | GN: Guinée
+CM: Cameroun | BJ: Bénin | TG: Togo | NE: Niger | GH: Ghana | NG: Nigeria
+MA: Maroc | DZ: Algérie | TN: Tunisie | EG: Égypte | CD: RD Congo
+MG: Madagascar | MZ: Mozambique | KE: Kenya | TZ: Tanzanie | ZA: Afrique du Sud
+FR: France | BE: Belgique | CH: Suisse | CA: Canada | US: États-Unis</pre>
+
+<h4 class="sub">Intérêts disponibles</h4>
+<pre>Football, Basketball, Musique, Cinéma, Mode, Cuisine, Voyage, Technologie,
+Business, Automobile, Bière, Boissons, Télécommunications, E-commerce,
+Santé, Beauté, Gaming, Actualités, Politique, Famille, Jeunesse, Éducation,
+Religion, Luxe</pre>
+
+<h4 class="sub">Objectifs de campagne Meta</h4>
+<pre>OUTCOME_TRAFFIC | OUTCOME_AWARENESS | OUTCOME_ENGAGEMENT
+OUTCOME_LEADS | OUTCOME_APP_PROMOTION | OUTCOME_SALES</pre>
+
+<h4 class="sub">Objectifs d'optimisation</h4>
+<pre>LINK_CLICKS | REACH | IMPRESSIONS | LANDING_PAGE_VIEWS
+POST_ENGAGEMENT | VIDEO_VIEWS | LEAD_GENERATION</pre>
+
+<h2 class="sub">8.6 Checklist d'implémentation Laravel API</h2>
+<ol>
+  <li>Installer <code>laravel/sanctum</code> si non installé + migrer</li>
+  <li>Créer le fichier <code>routes/api.php</code> avec groupe <code>v1</code></li>
+  <li>Créer les API Resources : <code>CampaignResource</code>, <code>PostResource</code>, <code>UserResource</code>, <code>NotificationResource</code></li>
+  <li>Ajouter la colonne <code>fcm_token</code> à <code>users</code></li>
+  <li>Installer <code>laravel-notification-channels/fcm</code> pour les push</li>
+  <li>Configurer les credentials Firebase (fichier <code>google-services.json</code> côté Android / <code>GoogleService-Info.plist</code> côté iOS)</li>
+  <li>Ajouter le middleware <code>api</code> à toutes les routes API (CORS, throttle)</li>
+  <li>Configurer CORS pour les domaines mobiles si nécessaire</li>
+</ol>
+
+<div style="margin-top:60px; padding-top:24px; border-top:1px solid var(--gray-200); text-align:center; color:var(--gray-400); font-size:12px;">
+  Boost Manager — Spécification Technique Application Mobile v1.0 — YesWeCange © 2026<br/>
+  Document généré automatiquement depuis le code source de l'application web.
+</div>
+
+</body>
+</html>

@@ -80,23 +80,83 @@
                     </div>
 
                     {{-- Toggle campagne existante --}}
-                    <div style="grid-column:1/-1;" x-data="{ open: {{ old('existing_campaign_id') ? 'true' : 'false' }} }">
+                    <div style="grid-column:1/-1;"
+                         x-data="{
+                            open:   {{ old('existing_campaign_id') ? 'true' : 'false' }},
+                            manual: {{ ($existingCampaigns->isEmpty() || old('existing_campaign_id', '') !== '' && !$existingCampaigns->pluck('meta_campaign_id')->contains(old('existing_campaign_id', ''))) ? 'true' : 'false' }}
+                         }">
                         <label style="display:flex; align-items:center; gap:.75rem; padding:.875rem 1rem; border:1.5px solid var(--color-border); border-radius:.625rem; cursor:pointer; transition:all .15s;"
                                :style="open ? 'border-color:var(--color-primary); background:var(--color-primary-light);' : ''">
                             <input type="checkbox" x-model="open"
                                    style="width:18px; height:18px; accent-color:var(--color-primary); flex-shrink:0; cursor:pointer;">
                             <div>
                                 <div style="font-size:.875rem; font-weight:600; color:var(--color-heading);">Rattacher à une campagne existante</div>
-                                <div style="font-size:.75rem; color:var(--color-muted);">L'Ad Set sera ajouté à une campagne déjà créée dans Meta Ads Manager</div>
+                                <div style="font-size:.75rem; color:var(--color-muted);">
+                                    L'Ad Set sera ajouté à une campagne déjà créée sur Meta Ads
+                                    @if($existingCampaigns->isNotEmpty())
+                                        · <strong style="color:var(--color-primary);">{{ $existingCampaigns->count() }} campagne(s) disponible(s)</strong>
+                                    @endif
+                                </div>
                             </div>
                         </label>
+
                         <div x-show="open" x-transition style="margin-top:.75rem;">
-                            <label class="form-label">ID de la campagne existante <span style="color:#ef4444;">*</span></label>
+
+                            @if($existingCampaigns->isEmpty())
+                            {{-- Aucune campagne en BDD : saisie manuelle uniquement --}}
+                            <label class="form-label">ID de la campagne Meta <span style="color:#ef4444;">*</span></label>
                             <input type="text" name="existing_campaign_id" class="form-control"
                                    value="{{ old('existing_campaign_id') }}"
                                    placeholder="ex: 120241034883010205">
-                            <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">Retrouvez cet ID dans Meta Ads Manager → Campagnes → colonne ID</p>
-                            @error('existing_campaign_id')<div class="invalid-feedback" style="display:block;">{{ $message }}</div>@enderror
+                            <p style="margin:.25rem 0 0; font-size:.75rem; color:var(--color-muted);">
+                                Aucune campagne créée via l'app pour l'instant.
+                                Retrouvez l'ID dans Meta Ads Manager → Campagnes → colonne ID.
+                            </p>
+
+                            @else
+                            {{-- Select depuis les campagnes existantes --}}
+                            <div x-show="!manual">
+                                <label class="form-label">Choisir une campagne existante <span style="color:#ef4444;">*</span></label>
+                                <select name="existing_campaign_id" class="form-control"
+                                        :disabled="manual"
+                                        style="font-family:inherit;">
+                                    <option value="">— Sélectionner une campagne —</option>
+                                    @foreach($existingCampaigns as $ec)
+                                    <option value="{{ $ec->meta_campaign_id }}"
+                                            {{ old('existing_campaign_id') === $ec->meta_campaign_id ? 'selected' : '' }}>
+                                        {{ $ec->campaign_name }}
+                                        &nbsp;·&nbsp;
+                                        ID&nbsp;{{ $ec->meta_campaign_id }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                <p style="margin:.375rem 0 0; font-size:.75rem; color:var(--color-muted); display:flex; align-items:center; justify-content:space-between;">
+                                    <span>Campagnes actives ou en pause créées via cette app.</span>
+                                    <button type="button" @click="manual = true"
+                                            style="background:none; border:none; color:var(--color-primary); font-size:.75rem; cursor:pointer; text-decoration:underline; padding:0;">
+                                        Saisir un ID manuellement
+                                    </button>
+                                </p>
+                            </div>
+
+                            {{-- Fallback saisie manuelle --}}
+                            <div x-show="manual" x-transition>
+                                <label class="form-label">ID de la campagne Meta <span style="color:#ef4444;">*</span></label>
+                                <input type="text" name="existing_campaign_id" class="form-control"
+                                       :disabled="!manual"
+                                       value="{{ old('existing_campaign_id', '') }}"
+                                       placeholder="ex: 120241034883010205">
+                                <p style="margin:.375rem 0 0; font-size:.75rem; color:var(--color-muted); display:flex; align-items:center; justify-content:space-between;">
+                                    <span>Retrouvez cet ID dans Meta Ads Manager → Campagnes → colonne ID.</span>
+                                    <button type="button" @click="manual = false"
+                                            style="background:none; border:none; color:var(--color-primary); font-size:.75rem; cursor:pointer; text-decoration:underline; padding:0;">
+                                        ← Choisir dans la liste
+                                    </button>
+                                </p>
+                            </div>
+                            @endif
+
+                            @error('existing_campaign_id')<div class="invalid-feedback" style="display:block; margin-top:.25rem;">{{ $message }}</div>@enderror
                         </div>
                     </div>
 

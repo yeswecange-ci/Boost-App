@@ -17,7 +17,9 @@
       "Bash(mkdir:*)",
       "Bash(/c/wamp64/bin/mysql/mysql8.4.7/bin/mysql.exe:*)",
       "Bash(sed:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(where:*)",
+      "Bash(node:*)"
     ]
   }
 }

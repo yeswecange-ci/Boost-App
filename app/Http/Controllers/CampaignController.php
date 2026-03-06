@@ -66,25 +66,21 @@ class CampaignController extends Controller
 
     public function create(Request $request)
     {
-        $postId = $request->get('post_id');
-
-        // Charger le post depuis posts_master si post_id fourni
+        $postId  = $request->get('post_id');
         $post    = null;
         $pageIds = auth()->user()->scopedFacebookPageIds();
 
         if ($postId) {
             $post = FacebookPost::with('page')->where('post_id', $postId)->first();
 
-            // Vérifier que l'utilisateur a accès à la page de ce post
             if ($post && $pageIds !== null && !in_array($post->facebook_page_id, $pageIds)) {
                 abort(403, 'Vous n\'avez pas accès à la page de ce post.');
             }
         }
 
-        // Si pas de post trouvé, lister les posts boostables filtrés par pages assignées
+        // Posts boostables filtrés par pages assignées
         $posts = null;
         if (!$post) {
-            $pageIds = auth()->user()->scopedFacebookPageIds();
             $posts = FacebookPost::with('page')
                 ->where('is_boostable', 1)
                 ->when($pageIds !== null, fn($q) => $q->whereIn('facebook_page_id', $pageIds))
@@ -92,7 +88,19 @@ class CampaignController extends Controller
                 ->get();
         }
 
-        return view('campaigns.create', compact('post', 'posts'));
+        // Campagnes déjà créées sur Meta (pour le select "Rattacher à une existante")
+        $allowedPostIds = $pageIds !== null
+            ? FacebookPost::whereIn('facebook_page_id', $pageIds)->pluck('post_id')
+            : null;
+
+        $existingCampaigns = BoostCampaign::whereNotNull('meta_campaign_id')
+            ->whereIn('execution_status', ['paused_ready', 'active', 'done'])
+            ->when($allowedPostIds !== null, fn($q) => $q->whereIn('post_id', $allowedPostIds))
+            ->select(['id', 'meta_campaign_id', 'campaign_name', 'post_id'])
+            ->latest()
+            ->get();
+
+        return view('campaigns.create', compact('post', 'posts', 'existingCampaigns'));
     }
 
     public function store(Request $request)
