@@ -4,6 +4,17 @@
 @section('page-subtitle', 'Définissez quelles pages chaque utilisateur peut voir et gérer')
 
 @section('content')
+
+{{-- Formulaires de sync (hors du form principal pour éviter l'imbrication HTML) --}}
+@foreach($pages as $page)
+<form id="sync-form-{{ $page->id }}"
+      method="POST"
+      action="{{ route('page-assignments.sync', $page) }}"
+      style="display:none;">
+    @csrf
+</form>
+@endforeach
+
 <div class="card">
     <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
         <div>
@@ -13,6 +24,17 @@
             </p>
         </div>
     </div>
+
+    @if(session('success'))
+    <div class="alert alert-success" style="margin:1rem 1.25rem 0;">
+        <i class="fas fa-check-circle" style="margin-right:0.5rem;"></i>{{ session('success') }}
+    </div>
+    @endif
+    @if(session('error'))
+    <div class="alert alert-danger" style="margin:1rem 1.25rem 0;">
+        <i class="fas fa-exclamation-circle" style="margin-right:0.5rem;"></i>{{ session('error') }}
+    </div>
+    @endif
 
     <div class="card-body" style="padding:0;">
         @if($users->isEmpty() || $pages->isEmpty())
@@ -28,7 +50,6 @@
         <form method="POST" action="{{ route('page-assignments.update') }}">
             @csrf
 
-            {{-- Scroll horizontal si beaucoup de pages --}}
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse; min-width:600px;">
                     <thead>
@@ -37,12 +58,32 @@
                                 Utilisateur
                             </th>
                             @foreach($pages as $page)
-                            <th style="padding:0.875rem 0.75rem; text-align:center; font-size:0.75rem; font-weight:600; color:#475569; white-space:nowrap; max-width:140px;">
-                                <div style="display:flex; flex-direction:column; align-items:center; gap:0.25rem;">
+                            @php
+                                $lastSync = $lastSyncs[$page->page_id] ?? null;
+                            @endphp
+                            <th style="padding:0.75rem 0.75rem; text-align:center; font-size:0.75rem; font-weight:600; color:#475569; white-space:nowrap; max-width:160px;">
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:0.375rem;">
                                     <i class="fab fa-facebook-square" style="font-size:1.125rem; color:#1877f2;"></i>
-                                    <span style="overflow:hidden; text-overflow:ellipsis; max-width:130px; display:block;" title="{{ $page->page_name }}">
+                                    <span style="overflow:hidden; text-overflow:ellipsis; max-width:140px; display:block;" title="{{ $page->page_name }}">
                                         {{ Str::limit($page->page_name, 18) }}
                                     </span>
+                                    {{-- Date de dernière sync --}}
+                                    <span style="font-size:0.6875rem; font-weight:400; color:#94a3b8; line-height:1.2;">
+                                        @if($lastSync)
+                                            <i class="fas fa-clock" style="margin-right:0.2rem;"></i>{{ $lastSync->finished_at->diffForHumans() }}
+                                        @else
+                                            <i class="fas fa-minus" style="margin-right:0.2rem;"></i>Jamais sync.
+                                        @endif
+                                    </span>
+                                    {{-- Bouton sync rattaché au form externe via form= --}}
+                                    <button type="submit"
+                                            form="sync-form-{{ $page->id }}"
+                                            style="font-size:0.6875rem; padding:0.2rem 0.6rem; border-radius:9999px; border:1px solid #e2e8f0; background:#fff; color:#4f46e5; cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem; transition:background .15s;"
+                                            onmouseover="this.style.background='#eef2ff'"
+                                            onmouseout="this.style.background='#fff'"
+                                            title="Synchroniser les posts de cette page">
+                                        <i class="fas fa-sync-alt"></i> Sync
+                                    </button>
                                 </div>
                             </th>
                             @endforeach

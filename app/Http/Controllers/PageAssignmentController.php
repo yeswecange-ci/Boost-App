@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\FacebookPage;
+use App\Models\SyncRun;
 use App\Models\User;
+use App\Services\MetaPostService;
 use Illuminate\Http\Request;
 
 class PageAssignmentController extends Controller
@@ -23,7 +25,28 @@ class PageAssignmentController extends Controller
 
         $pages = FacebookPage::where('is_active', true)->orderBy('page_name')->get();
 
-        return view('admin.page-assignments', compact('users', 'pages'));
+        // Dernière sync réussie par page (page_id externe)
+        $lastSyncs = SyncRun::where('status', 'FINISHED')
+            ->whereIn('page_id', $pages->pluck('page_id'))
+            ->orderByDesc('finished_at')
+            ->get()
+            ->groupBy('page_id')
+            ->map(fn($runs) => $runs->first()); // la plus récente par page
+
+        return view('admin.page-assignments', compact('users', 'pages', 'lastSyncs'));
+    }
+
+    public function syncPosts(FacebookPage $page)
+    {
+        $service = app(MetaPostService::class);
+        $result  = $service->getPagePosts($page->page_id, limit: 50);
+
+        if ($result['error']) {
+            return back()->with('error', "Sync « {$page->page_name} » échouée : {$result['error']}");
+        }
+
+        $count = count($result['data']);
+        return back()->with('success', "{$count} post(s) synchronisé(s) depuis « {$page->page_name} ».");
     }
 
     public function update(Request $request)

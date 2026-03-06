@@ -76,8 +76,9 @@ Route::middleware(['auth'])->group(function () {
 
     // ─── Page Assignments (admin only) ───────────────────────
     Route::middleware(['role:admin'])->prefix('admin')->name('page-assignments.')->group(function () {
-        Route::get('/page-assignments',  [PageAssignmentController::class, 'index'])->name('index');
-        Route::post('/page-assignments', [PageAssignmentController::class, 'update'])->name('update');
+        Route::get('/page-assignments',              [PageAssignmentController::class, 'index'])->name('index');
+        Route::post('/page-assignments',             [PageAssignmentController::class, 'update'])->name('update');
+        Route::post('/page-assignments/{page}/sync', [PageAssignmentController::class, 'syncPosts'])->name('sync');
     });
 
     // ─── Users (admin only) ──────────────────────────────────
