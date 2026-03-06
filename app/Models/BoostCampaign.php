@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BoostCampaign extends Model
 {
@@ -51,6 +52,11 @@ class BoostCampaign extends Model
         return $this->belongsTo(FacebookPost::class, 'post_id', 'post_id');
     }
 
+    public function analytics(): HasMany
+    {
+        return $this->hasMany(CampaignAnalytics::class, 'boost_campaign_id')->orderBy('date_snapshot');
+    }
+
     // ── Accesseurs ─────────────────────────────────────────
 
     public function getStatusLabelAttribute(): string
@@ -90,5 +96,25 @@ class BoostCampaign extends Model
     public function getBudgetFormattedAttribute(): string
     {
         return number_format($this->budget_value, 0, ',', ' ') . ' FCFA';
+    }
+
+    /**
+     * Totaux cumulés calculés depuis les analytics chargées.
+     * Appeler après $campaign->load('analytics').
+     */
+    public function getAnalyticsTotalsAttribute(): array
+    {
+        $rows = $this->relationLoaded('analytics') ? $this->analytics : collect();
+
+        return [
+            'impressions' => $rows->sum('impressions'),
+            'reach'       => $rows->sum('reach'),       // approximatif (somme des jours)
+            'clicks'      => $rows->sum('clicks'),
+            'spend'       => round($rows->sum('spend'), 2),
+            'ctr'         => $rows->avg('ctr')  ?? 0,
+            'cpm'         => $rows->avg('cpm')  ?? 0,
+            'cpc'         => $rows->avg('cpc')  ?? 0,
+            'days'        => $rows->count(),
+        ];
     }
 }

@@ -56,7 +56,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/campaigns',                      [CampaignController::class, 'store'])->name('campaigns.store');
         Route::post('/campaigns/{campaign}/submit',    [CampaignController::class, 'submit'])->name('campaigns.submit');
         Route::post('/campaigns/{campaign}/launch',    [CampaignController::class, 'launch'])->name('campaigns.launch');
-        Route::post('/campaigns/{campaign}/activate',  [CampaignController::class, 'activate'])->name('campaigns.activate');
+        Route::post('/campaigns/{campaign}/activate',   [CampaignController::class, 'activate'])->name('campaigns.activate');
+        Route::post('/campaigns/{campaign}/sync-stats', [CampaignController::class, 'syncStats'])->name('campaigns.sync-stats');
     });
 
     // Validateurs N1 + N2 : approuver/rejeter (vérification fine dans le contrôleur)

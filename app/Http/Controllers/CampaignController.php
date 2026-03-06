@@ -8,6 +8,7 @@ use App\Models\FacebookPost;
 use App\Models\User;
 use App\Notifications\CampaignSubmittedNotification;
 use App\Notifications\CampaignPendingN2Notification;
+use App\Services\MetaCampaignInsightsService;
 use App\Services\SettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -372,7 +373,36 @@ class CampaignController extends Controller
 
     public function show(BoostCampaign $campaign)
     {
+        $campaign->load('analytics');
         return view('campaigns.show', compact('campaign'));
+    }
+
+    // ── Synchronisation manuelle des stats Meta ────────────────────
+    public function syncStats(BoostCampaign $campaign)
+    {
+        $user = auth()->user();
+        if (!$user->hasRole('admin') && $campaign->user_id !== $user->id) {
+            abort(403);
+        }
+
+        if (!$campaign->meta_campaign_id) {
+            return back()->with('error', 'Cette campagne n\'a pas encore d\'ID Meta — lancez le boost d\'abord.');
+        }
+
+        try {
+            $service = app(MetaCampaignInsightsService::class);
+
+            $since = $campaign->launched_at
+                ? $campaign->launched_at->subDay()->format('Y-m-d')
+                : now()->subDays(30)->format('Y-m-d');
+
+            $count = $service->upsertForCampaign($campaign, $since, now()->format('Y-m-d'));
+
+            return back()->with('success', "{$count} jour(s) de statistiques synchronisés depuis Meta Ads.");
+        } catch (\Throwable $e) {
+            Log::error('CampaignController::syncStats', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Erreur de synchronisation : ' . $e->getMessage());
+        }
     }
 
     // ── Callback n8n → Laravel (UPDATE execution_status + meta IDs) ──

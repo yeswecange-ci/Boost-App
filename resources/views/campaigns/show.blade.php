@@ -117,6 +117,183 @@
         </div>
     </div>
 
+    {{-- ══ RÉSULTATS META ADS ══════════════════════════════════════ --}}
+    @if($campaign->meta_campaign_id)
+    @php
+        $totals        = $campaign->analytics_totals;
+        $analyticsRows = $campaign->analytics;
+        $lastSync      = $analyticsRows->last()?->updated_at;
+        $canSync       = auth()->user()->hasRole('admin') || $campaign->user_id === auth()->id();
+        $hasData       = $analyticsRows->isNotEmpty();
+    @endphp
+    <div class="card">
+        <div class="card-header" style="justify-content:space-between; flex-wrap:wrap; gap:.5rem;">
+            <div style="display:flex; align-items:center; gap:.5rem;">
+                <i class="fas fa-chart-bar" style="color:var(--color-primary);"></i>
+                <div>
+                    <div>Résultats Meta Ads</div>
+                    @if($lastSync)
+                    <div style="font-size:.7rem; font-weight:400; color:var(--color-muted);">
+                        Dernière sync : {{ $lastSync->diffForHumans() }}
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @if($canSync)
+            <form method="POST" action="{{ route('campaigns.sync-stats', $campaign->id) }}">
+                @csrf
+                <button type="submit" class="btn-secondary btn-sm">
+                    <i class="fas fa-sync-alt"></i> Synchroniser
+                </button>
+            </form>
+            @endif
+        </div>
+
+        <div class="card-body">
+
+            @if(!$hasData)
+            <div style="text-align:center; padding:2rem 1rem; color:var(--color-muted);">
+                <i class="fas fa-chart-line" style="font-size:2rem; margin-bottom:.75rem; opacity:.3; display:block;"></i>
+                <p style="margin:0; font-size:.875rem;">
+                    Aucune statistique disponible pour l'instant.<br>
+                    @if(in_array($campaign->execution_status, ['active','paused_ready','done']))
+                        Cliquez sur <strong>Synchroniser</strong> pour récupérer les données Meta Ads.
+                    @else
+                        Les statistiques seront disponibles une fois la campagne active sur Meta.
+                    @endif
+                </p>
+            </div>
+
+            @else
+
+            {{-- KPI Summary ──────────────────────────────────── --}}
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:.875rem; margin-bottom:1.5rem;">
+
+                <div style="background:var(--color-primary-light); border-radius:.625rem; padding:.875rem; text-align:center;">
+                    <div style="font-size:1.375rem; font-weight:800; color:var(--color-primary);">
+                        {{ number_format($totals['impressions'], 0, ',', '\u{202F}') }}
+                    </div>
+                    <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">Impressions</div>
+                </div>
+
+                <div style="background:#f0fdf4; border-radius:.625rem; padding:.875rem; text-align:center;">
+                    <div style="font-size:1.375rem; font-weight:800; color:#16a34a;">
+                        {{ number_format($totals['reach'], 0, ',', '\u{202F}') }}
+                    </div>
+                    <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">Personnes touchées</div>
+                </div>
+
+                <div style="background:#fffbeb; border-radius:.625rem; padding:.875rem; text-align:center;">
+                    <div style="font-size:1.375rem; font-weight:800; color:#d97706;">
+                        {{ number_format($totals['clicks'], 0, ',', '\u{202F}') }}
+                    </div>
+                    <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">Clics</div>
+                </div>
+
+                <div style="background:#fef2f2; border-radius:.625rem; padding:.875rem; text-align:center;">
+                    <div style="font-size:1.375rem; font-weight:800; color:#dc2626;">
+                        {{ number_format($totals['spend'], 0, ',', '\u{202F}') }} FCFA
+                    </div>
+                    <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">Dépensé</div>
+                </div>
+
+                <div style="background:#f5f3ff; border-radius:.625rem; padding:.875rem; text-align:center;">
+                    <div style="font-size:1.375rem; font-weight:800; color:#7c3aed;">
+                        {{ number_format($totals['ctr'], 2, ',', '') }}&nbsp;%
+                    </div>
+                    <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">CTR moyen</div>
+                </div>
+
+                <div style="background:var(--color-page-bg); border-radius:.625rem; padding:.875rem; text-align:center; border:1px solid var(--color-border);">
+                    <div style="font-size:1.375rem; font-weight:800; color:var(--color-heading);">
+                        {{ number_format($totals['cpm'], 0, ',', '\u{202F}') }} FCFA
+                    </div>
+                    <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">CPM moyen</div>
+                </div>
+
+                <div style="background:var(--color-page-bg); border-radius:.625rem; padding:.875rem; text-align:center; border:1px solid var(--color-border);">
+                    <div style="font-size:1.375rem; font-weight:800; color:var(--color-heading);">
+                        {{ number_format($totals['cpc'], 0, ',', '\u{202F}') }} FCFA
+                    </div>
+                    <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">CPC moyen</div>
+                </div>
+
+            </div>
+
+            {{-- Graphique sparkline (barres CSS) ────────────────── --}}
+            @if($analyticsRows->count() > 1)
+            @php
+                $maxImpr = $analyticsRows->max('impressions') ?: 1;
+            @endphp
+            <div style="margin-bottom:1.25rem;">
+                <div style="font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-bottom:.5rem;">
+                    Impressions par jour
+                </div>
+                <div style="display:flex; align-items:flex-end; gap:3px; height:56px;">
+                    @foreach($analyticsRows as $row)
+                    @php $h = max(4, round(($row->impressions / $maxImpr) * 56)); @endphp
+                    <div title="{{ $row->date_snapshot->format('d/m') }} — {{ number_format($row->impressions) }} impressions"
+                         style="flex:1; min-width:4px; height:{{ $h }}px; background:var(--color-primary); border-radius:2px 2px 0 0; opacity:.75; cursor:default; transition:opacity .15s;"
+                         onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.75'">
+                    </div>
+                    @endforeach
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:.65rem; color:var(--color-muted); margin-top:.25rem;">
+                    <span>{{ $analyticsRows->first()->date_snapshot->format('d M') }}</span>
+                    <span>{{ $analyticsRows->last()->date_snapshot->format('d M') }}</span>
+                </div>
+            </div>
+            @endif
+
+            {{-- Tableau quotidien ────────────────────────────────── --}}
+            <div style="overflow-x:auto;">
+                <table class="data-table" style="font-size:.8125rem;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th style="text-align:right;">Impressions</th>
+                            <th style="text-align:right;">Reach</th>
+                            <th style="text-align:right;">Clics</th>
+                            <th style="text-align:right;">Dépenses</th>
+                            <th style="text-align:right;">CTR</th>
+                            <th style="text-align:right;">CPM</th>
+                            <th style="text-align:right;">CPC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($analyticsRows as $row)
+                        <tr>
+                            <td style="white-space:nowrap; font-weight:500;">{{ $row->date_snapshot->format('d/m/Y') }}</td>
+                            <td style="text-align:right; font-family:monospace;">{{ number_format($row->impressions, 0, ',', '\u{202F}') }}</td>
+                            <td style="text-align:right; font-family:monospace;">{{ number_format($row->reach, 0, ',', '\u{202F}') }}</td>
+                            <td style="text-align:right; font-family:monospace;">{{ number_format($row->clicks, 0, ',', '\u{202F}') }}</td>
+                            <td style="text-align:right; font-family:monospace; font-weight:600;">{{ number_format($row->spend, 0, ',', '\u{202F}') }} F</td>
+                            <td style="text-align:right; color:var(--color-accent);">{{ number_format($row->ctr, 2, ',', '') }}&nbsp;%</td>
+                            <td style="text-align:right;">{{ number_format($row->cpm, 0, ',', '\u{202F}') }} F</td>
+                            <td style="text-align:right;">{{ number_format($row->cpc, 0, ',', '\u{202F}') }} F</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:var(--color-page-bg); font-weight:700; border-top:2px solid var(--color-border);">
+                            <td>Total</td>
+                            <td style="text-align:right; font-family:monospace;">{{ number_format($totals['impressions'], 0, ',', '\u{202F}') }}</td>
+                            <td style="text-align:right; font-family:monospace;">{{ number_format($totals['reach'], 0, ',', '\u{202F}') }}</td>
+                            <td style="text-align:right; font-family:monospace;">{{ number_format($totals['clicks'], 0, ',', '\u{202F}') }}</td>
+                            <td style="text-align:right; font-family:monospace;">{{ number_format($totals['spend'], 0, ',', '\u{202F}') }} F</td>
+                            <td style="text-align:right; color:var(--color-accent);">{{ number_format($totals['ctr'], 2, ',', '') }}&nbsp;%</td>
+                            <td style="text-align:right;">{{ number_format($totals['cpm'], 0, ',', '\u{202F}') }} F</td>
+                            <td style="text-align:right;">{{ number_format($totals['cpc'], 0, ',', '\u{202F}') }} F</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            @endif {{-- hasData --}}
+        </div>
+    </div>
+    @endif {{-- meta_campaign_id --}}
+
     @php
         $user      = auth()->user();
         $isAdmin   = $user->hasRole('admin');
