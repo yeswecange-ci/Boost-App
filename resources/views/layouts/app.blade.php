@@ -75,6 +75,14 @@
             Posts Facebook
         </a>
 
+        @if(auth()->user()->hasRole(['operator','admin']))
+        <a href="{{ route('boost.my-requests') }}"
+           class="sidebar-item {{ request()->routeIs('boost.my-requests') ? 'active' : '' }}">
+            <span class="icon"><i class="fas fa-rocket"></i></span>
+            Mes boosts
+        </a>
+        @endif
+
         <a href="{{ route('campaigns.index') }}"
            class="sidebar-item {{ request()->routeIs('campaigns.*') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-layer-group"></i></span>
