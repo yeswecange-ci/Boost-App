@@ -139,6 +139,12 @@ class CampaignController extends Controller
             abort(403, 'Vous n\'avez pas accès à la page de ce post.');
         }
 
+        // Vérification de boostabilité (bloque la soumission, pas le brouillon)
+        if ($request->input('action') === 'submit' && $postForCheck && !$postForCheck->isBoostable()) {
+            return back()->withInput()
+                ->with('error', 'Ce post ne peut pas être boosté : ' . $postForCheck->boostability_reason);
+        }
+
         $campaign = BoostCampaign::create([
             'user_id'               => auth()->id(),
             'post_id'               => $request->post_id,

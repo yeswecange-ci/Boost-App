@@ -15,8 +15,8 @@ use App\Notifications\BoostCancelledNotification;
 use App\Notifications\BoostActivatedNotification;
 use App\Notifications\BoostPendingN2Notification;
 use App\Services\N8nWebhookService;
+use App\Services\SettingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ValidatorController extends Controller
@@ -121,10 +121,6 @@ class ValidatorController extends Controller
             }
         });
 
-        // Invalide le cache des badges sidebar
-        Cache::forget('sidebar_n1_count');
-        Cache::forget('sidebar_n2_count');
-
         // Notifications et N8N en dehors de la transaction
         if ($boost->needsN2()) {
             // Notifier uniquement les N+2 assignés à la page concernée
@@ -148,7 +144,7 @@ class ValidatorController extends Controller
         try {
             $this->n8n->triggerCreate($boost);
             $message = "Boost #" . $boost->id . " approuvé N+1. " .
-                (config('services.n8n.mock_mode') ? "Campagne créée (mode mock)." : "N8N crée la campagne Meta.");
+                (SettingService::bool('n8n.mock_mode') ? "Campagne créée (mode mock)." : "N8N crée la campagne Meta.");
         } catch (\RuntimeException $e) {
             return redirect()->back()->with('error',
                 "Boost approuvé mais N8N injoignable : " . $e->getMessage() . " — Relancez via la fiche."
@@ -184,7 +180,7 @@ class ValidatorController extends Controller
             ]);
         });
 
-        Cache::forget('sidebar_n1_count');
+
         $boost->operator?->notify(new BoostChangesRequestedNotification($boost));
 
         return redirect()->back()->with('success',
@@ -219,7 +215,7 @@ class ValidatorController extends Controller
             ]);
         });
 
-        Cache::forget('sidebar_n1_count');
+
         $boost->operator?->notify(new BoostRejectedNotification($boost));
 
         return redirect()->back()->with('success', "Boost #" . $boost->id . " rejeté N+1.");
@@ -255,13 +251,13 @@ class ValidatorController extends Controller
             ]);
         });
 
-        Cache::forget('sidebar_n2_count');
+
         $boost->operator?->notify(new BoostApprovedNotification($boost));
 
         try {
             $this->n8n->triggerCreate($boost);
             $message = "Boost #" . $boost->id . " approuvé N+2. " .
-                (config('services.n8n.mock_mode') ? "Campagne créée (mode mock)." : "N8N crée la campagne Meta.");
+                (SettingService::bool('n8n.mock_mode') ? "Campagne créée (mode mock)." : "N8N crée la campagne Meta.");
         } catch (\RuntimeException $e) {
             return redirect()->back()->with('error',
                 "Boost approuvé mais N8N injoignable : " . $e->getMessage() . " — Relancez via la fiche."
@@ -298,7 +294,7 @@ class ValidatorController extends Controller
             ]);
         });
 
-        Cache::forget('sidebar_n2_count');
+
         $boost->operator?->notify(new BoostRejectedNotification($boost));
 
         return redirect()->back()->with('success', "Boost #" . $boost->id . " rejeté N+2.");
@@ -330,7 +326,7 @@ class ValidatorController extends Controller
             ]);
         });
 
-        Cache::forget('sidebar_n2_count');
+
         $boost->operator?->notify(new BoostChangesRequestedNotification($boost));
 
         return redirect()->back()->with('success',
@@ -372,7 +368,7 @@ class ValidatorController extends Controller
 
         try {
             $this->n8n->triggerActivate($boost);
-            $message = config('services.n8n.mock_mode')
+            $message = SettingService::bool('n8n.mock_mode')
                 ? "Campagne #" . $boost->id . " activée (mode mock)."
                 : "Demande d'activation envoyée à N8N. La campagne sera active dans quelques instants.";
         } catch (\RuntimeException $e) {
@@ -391,7 +387,7 @@ class ValidatorController extends Controller
 
         try {
             $this->n8n->triggerPause($boost);
-            $message = config('services.n8n.mock_mode')
+            $message = SettingService::bool('n8n.mock_mode')
                 ? "Campagne #" . $boost->id . " mise en pause (mode mock)."
                 : "Demande de pause envoyée à N8N.";
         } catch (\RuntimeException $e) {

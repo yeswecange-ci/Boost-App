@@ -75,14 +75,6 @@
             Posts Facebook
         </a>
 
-        @if(auth()->user()->hasRole(['operator','admin']))
-        <a href="{{ route('boost.my-requests') }}"
-           class="sidebar-item {{ request()->routeIs('boost.my-requests') ? 'active' : '' }}">
-            <span class="icon"><i class="fas fa-rocket"></i></span>
-            Mes boosts
-        </a>
-        @endif
-
         <a href="{{ route('campaigns.index') }}"
            class="sidebar-item {{ request()->routeIs('campaigns.*') ? 'active' : '' }}">
             <span class="icon"><i class="fas fa-layer-group"></i></span>
@@ -276,8 +268,13 @@
                 </div>
 
                 @forelse($__notifItems as $notif)
+                @php
+                    $notifUrl = ($notif->data['type'] ?? '') === 'campaign'
+                        ? route('campaigns.show', $notif->data['boost_id'])
+                        : route('boost.show',     $notif->data['boost_id']);
+                @endphp
                 <a class="notif-item"
-                   href="{{ route('boost.show', $notif->data['boost_id']) }}"
+                   href="{{ $notifUrl }}"
                    onclick="event.preventDefault(); document.getElementById('mark-read-{{ $notif->id }}').submit();">
                     <div style="font-size:0.875rem; font-weight:500; color:#0f172a;">
                         {{ $notif->data['message'] }}

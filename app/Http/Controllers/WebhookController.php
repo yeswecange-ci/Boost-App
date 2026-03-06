@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AdsEntity;
 use App\Models\BoostRequest;
 use App\Models\BoostRun;
+use App\Models\FacebookPage;
 use App\Models\User;
 use App\Notifications\BoostCreatedNotification;
 use App\Notifications\BoostActivatedNotification;
@@ -96,13 +97,15 @@ class WebhookController extends Controller
             $boostRun->update(['status' => 'PAUSED']);
         }
 
-        // Notifier l'opérateur + les validateurs que la campagne est prête à activer
+        // Notifier l'opérateur + les validateurs assignés à la page du boost
         $boost->operator?->notify(new BoostCreatedNotification($boost));
 
-        $validators = User::role(['validator_n1', 'validator_n2', 'validator', 'admin'])->get();
-        foreach ($validators as $validator) {
-            $validator->notify(new BoostCreatedNotification($boost));
-        }
+        $boostFbPageDbId = FacebookPage::where('page_id', $boost->page_id)->value('id');
+        $validators = User::role(['validator_n1', 'validator_n2', 'validator'])
+            ->when($boostFbPageDbId, fn($q) => $q->whereHas('facebookPages', fn($q2) => $q2->where('facebook_pages.id', $boostFbPageDbId)))
+            ->get();
+        $validators->each(fn($v) => $v->notify(new BoostCreatedNotification($boost)));
+        User::role('admin')->get()->each(fn($a) => $a->notify(new BoostCreatedNotification($boost)));
 
         return response()->json(['received' => true, 'status' => 'paused_ready']);
     }

@@ -18,6 +18,7 @@ class CampaignSubmittedNotification extends Notification
     {
         return [
             'boost_id' => $this->campaign->id,
+            'type'     => 'campaign',
             'message'  => "Campagne \"{$this->campaign->campaign_name}\" soumise par {$this->campaign->user?->name} — en attente de validation N+1.",
         ];
     }
