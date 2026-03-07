@@ -38,7 +38,7 @@ class ValidatorController extends Controller
                               ->where('status', 'pending_n1')
                               ->when($fbPageIds !== null, fn($q) => $q->whereIn('page_id', $fbPageIds))
                               ->latest()
-                              ->paginate(10);
+                              ->paginate(10)->withQueryString();
 
         return view('boost.pending-n1', compact('boosts'));
     }
@@ -54,7 +54,7 @@ class ValidatorController extends Controller
                               ->where('status', 'pending_n2')
                               ->when($fbPageIds !== null, fn($q) => $q->whereIn('page_id', $fbPageIds))
                               ->latest()
-                              ->paginate(10);
+                              ->paginate(10)->withQueryString();
 
         return view('boost.pending-n2', compact('boosts'));
     }
