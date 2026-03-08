@@ -15,6 +15,7 @@ class SecurityHeaders
     private const SCRIPT_SOURCES = [
         "'self'",
         "'unsafe-inline'",       // Requis pour Alpine.js (x-data) et @push('scripts')
+        "'unsafe-eval'",         // Requis pour Alpine.js v3 (new Function() pour évaluer les expressions)
         'cdn.jsdelivr.net',
         'cdnjs.cloudflare.com',
         'unpkg.com',
