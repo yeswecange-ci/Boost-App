@@ -17,9 +17,9 @@ class CampaignPendingN2Notification extends Notification
     public function toDatabase(object $notifiable): array
     {
         return [
-            'boost_id' => $this->campaign->id,
-            'type'     => 'campaign',
-            'message'  => "Campagne \"{$this->campaign->campaign_name}\" validée N+1 — en attente de votre validation N+2.",
+            'campaign_id' => $this->campaign->id,
+            'type'        => 'campaign',
+            'message'     => "Campagne \"{$this->campaign->campaign_name}\" validée N+1 — en attente de votre validation N+2.",
         ];
     }
 }

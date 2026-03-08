@@ -12,11 +12,19 @@ class NotificationController extends Controller
         $notification->markAsRead();
 
         $data = $notification->data;
+        $type = $data['type'] ?? '';
 
+        // Notifications de campagnes (nouveau format : campaign_id)
         if (!empty($data['campaign_id'])) {
             return redirect()->route('campaigns.show', $data['campaign_id']);
         }
 
+        // Notifications de campagnes legacy (ancien format : boost_id + type=campaign)
+        if ($type === 'campaign' && !empty($data['boost_id'])) {
+            return redirect()->route('campaigns.show', $data['boost_id']);
+        }
+
+        // Notifications de boosts
         if (!empty($data['boost_id'])) {
             return redirect()->route('boost.show', $data['boost_id']);
         }

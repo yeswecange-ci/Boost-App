@@ -277,9 +277,15 @@
 
                 @forelse($__notifItems as $notif)
                 @php
-                    $notifUrl = ($notif->data['type'] ?? '') === 'campaign'
-                        ? route('campaigns.show', $notif->data['boost_id'])
-                        : route('boost.show',     $notif->data['boost_id']);
+                    $notifType = $notif->data['type'] ?? '';
+                    if ($notifType === 'campaign') {
+                        // Nouveau format : campaign_id — fallback sur boost_id pour notifs legacy en DB
+                        $notifId  = $notif->data['campaign_id'] ?? $notif->data['boost_id'] ?? null;
+                        $notifUrl = $notifId ? route('campaigns.show', $notifId) : route('home');
+                    } else {
+                        $notifId  = $notif->data['boost_id'] ?? null;
+                        $notifUrl = $notifId ? route('boost.show', $notifId) : route('home');
+                    }
                 @endphp
                 <a class="notif-item"
                    href="{{ $notifUrl }}"
