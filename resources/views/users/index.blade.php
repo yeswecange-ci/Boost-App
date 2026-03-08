@@ -164,9 +164,9 @@ $tabs = [
                                     <i class="fas fa-trash"></i>
                                 </button>
 
-                                <div x-show="confirmDelete" x-cloak
-                                     style="position:absolute; right:0; top:calc(100% + 6px); z-index:50; width:220px;"
-                                     class="dropdown-menu" style="padding:1rem;">
+                                <div x-show="confirmDelete"
+                                     style="display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:50; width:220px; padding:1rem;"
+                                     class="dropdown-menu">
                                     <div style="padding:0.75rem 1rem;">
                                         <p style="font-size:0.8125rem; color:#0f172a; font-weight:500; margin:0 0 0.75rem;">
                                             Supprimer <strong>{{ $user->name }}</strong> ?

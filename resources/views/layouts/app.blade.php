@@ -263,9 +263,9 @@
             $__notifCount  = $__notifItems->count();
         @endphp
 
-        {{-- ✅ CORRIGÉ : @click.away → @click.outside (Alpine v3) --}}
-        <div x-data="{ open: false }" style="position:relative;">
-            <button @click="open = !open" @click.outside="open = false"
+        {{-- ✅ CORRIGÉ : @click.outside sur le div conteneur (Alpine v3) --}}
+        <div x-data="{ open: false }" @click.outside="open = false" style="position:relative;">
+            <button @click="open = !open"
                     style="position:relative; background:none; border:none; cursor:pointer; width:2.5rem; height:2.5rem; border-radius:0.5rem; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:1.125rem; transition:background 0.15s;"
                     onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
                 <i class="fas fa-bell"></i>
@@ -332,9 +332,9 @@
             </div>
         </div>
 
-        {{-- ✅ CORRIGÉ : @click.away → @click.outside (Alpine v3) --}}
-        <div x-data="{ open: false }" style="position:relative;">
-            <button @click="open = !open" @click.outside="open = false"
+        {{-- ✅ CORRIGÉ : @click.outside sur le div conteneur (Alpine v3) --}}
+        <div x-data="{ open: false }" @click.outside="open = false" style="position:relative;">
+            <button @click="open = !open"
                     style="display:flex; align-items:center; gap:0.5rem; background:none; border:none; cursor:pointer; padding:0.375rem 0.5rem; border-radius:0.5rem; transition:background 0.15s;"
                     onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
                 <x-user-avatar :user="$__u" :size="32" />

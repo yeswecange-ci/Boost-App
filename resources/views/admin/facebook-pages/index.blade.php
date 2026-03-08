@@ -11,7 +11,7 @@
 <form id="form-toggle-{{ $p->id }}" method="POST" action="{{ route('admin.facebook-pages.toggle', $p) }}" style="display:none;">@csrf</form>
 @endforeach
 
-<div x-data="{ showAdd: false }">
+<div x-data="{ showAdd: {{ $errors->hasAny(['page_id','page_name','access_token']) ? 'true' : 'false' }} }">
 
     {{-- ── Barre d'actions ── --}}
     <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
@@ -33,11 +33,7 @@
     </div>
 
     {{-- ── Formulaire ajout manuel (slide) ── --}}
-    <div x-show="showAdd" x-cloak
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 -translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         style="margin-bottom:1.5rem;">
+    <div x-show="showAdd" style="display:none; margin-bottom:1.5rem;">
         <div class="card">
             <div class="card-header">
                 <h3 style="font-size:0.9375rem; font-weight:600; color:#0f172a; margin:0;">
