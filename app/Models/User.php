@@ -14,15 +14,22 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'avatar', 'is_active',
         'two_factor_secret', 'two_factor_enabled', 'two_factor_required',
+        'failed_login_attempts', 'locked_at',
     ];
 
     protected $hidden = ['password', 'remember_token', 'two_factor_secret'];
 
     protected $casts = [
-        'is_active'            => 'boolean',
-        'two_factor_enabled'   => 'boolean',
-        'two_factor_required'  => 'boolean',
+        'is_active'              => 'boolean',
+        'two_factor_enabled'     => 'boolean',
+        'two_factor_required'    => 'boolean',
+        'locked_at'              => 'datetime',
     ];
+
+    public function isLocked(): bool
+    {
+        return $this->locked_at !== null;
+    }
 
     public function boostRequests()
     {

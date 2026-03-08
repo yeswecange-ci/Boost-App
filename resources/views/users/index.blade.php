@@ -137,7 +137,13 @@ $tabs = [
                         @endif
                     </td>
                     <td>
-                        @if($user->is_active)
+                        @if($user->isLocked())
+                        <span style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.6rem; background:#fef2f2; color:#b91c1c; border-radius:9999px; font-size:0.75rem; font-weight:600;"
+                              title="Verrouillé le {{ $user->locked_at->format('d/m/Y H:i') }}">
+                            <i class="fas fa-lock" style="font-size:0.625rem;"></i>
+                            Verrouillé
+                        </span>
+                        @elseif($user->is_active)
                         <span style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.6rem; background:#f0fdf4; color:#16a34a; border-radius:9999px; font-size:0.75rem; font-weight:600;">
                             <span style="width:6px; height:6px; background:#16a34a; border-radius:50%;"></span>
                             Actif
@@ -183,7 +189,15 @@ $tabs = [
                                 </button>
                             </form>
 
-                            @if(!$user->two_factor_enabled)
+                            @if($user->isLocked())
+                            <form method="POST" action="{{ route('users.unlock', $user) }}" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="btn-success btn-sm"
+                                        title="Déverrouiller le compte">
+                                    <i class="fas fa-lock-open"></i>
+                                </button>
+                            </form>
+                            @elseif(!$user->two_factor_enabled)
                             <form method="POST" action="{{ route('users.force2fa', $user) }}" style="display:inline;">
                                 @csrf
                                 <button type="submit" class="btn-secondary btn-sm"

@@ -128,6 +128,20 @@ class UserController extends Controller
                          ->with('success', 'Utilisateur supprimé.');
     }
 
+    /**
+     * Déverrouille un compte bloqué après trop de tentatives échouées (admin uniquement).
+     */
+    public function unlock(User $user)
+    {
+        $user->update([
+            'failed_login_attempts' => 0,
+            'locked_at'             => null,
+        ]);
+
+        return redirect()->route('users.index')
+            ->with('success', "Compte de {$user->name} déverrouillé avec succès.");
+    }
+
     public function toggleActive(User $user)
     {
         $user->update(['is_active' => !$user->is_active]);
