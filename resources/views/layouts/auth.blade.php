@@ -171,5 +171,17 @@
 
     <p class="auth-copyright">© {{ date('Y') }} {{ config('app.name') }} — Usage interne</p>
 
+<script>
+    window.addEventListener('load', function () {
+        const loader = document.getElementById('page-loader');
+        if (loader) {
+            loader.classList.add('loader-fade-out');
+            setTimeout(() => loader.remove(), 400);
+        }
+    });
+</script>
+
+@stack('scripts')
+
 </body>
 </html>
