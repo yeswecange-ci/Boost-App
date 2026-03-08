@@ -116,7 +116,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/{user}/edit',     [UserController::class, 'edit'])->name('edit');
         Route::put('/{user}',          [UserController::class, 'update'])->name('update');
         Route::delete('/{user}',       [UserController::class, 'destroy'])->name('destroy');
-        Route::post('/{user}/toggle',  [UserController::class, 'toggleActive'])->name('toggle');
+        Route::post('/{user}/toggle',    [UserController::class, 'toggleActive'])->name('toggle');
+        Route::post('/force-2fa-all',    [UserController::class, 'force2faAll'])->name('force2fa.all');
+        Route::post('/{user}/force-2fa', [UserController::class, 'force2fa'])->name('force2fa');
     });
 
     // ─── Sync Runs (admin + validators) — monitoring ─────────

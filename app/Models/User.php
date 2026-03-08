@@ -13,14 +13,15 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'avatar', 'is_active',
-        'two_factor_secret', 'two_factor_enabled',
+        'two_factor_secret', 'two_factor_enabled', 'two_factor_required',
     ];
 
     protected $hidden = ['password', 'remember_token', 'two_factor_secret'];
 
     protected $casts = [
-        'is_active'           => 'boolean',
-        'two_factor_enabled'  => 'boolean',
+        'is_active'            => 'boolean',
+        'two_factor_enabled'   => 'boolean',
+        'two_factor_required'  => 'boolean',
     ];
 
     public function boostRequests()

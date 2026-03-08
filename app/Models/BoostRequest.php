@@ -93,7 +93,7 @@ class BoostRequest extends Model
 
     public function getBudgetFormattedAttribute(): string
     {
-        return number_format((float) $this->budget, 0, ',', ' ') . ' FCFA';
+        return '$' . number_format((float) $this->budget, 2, '.', ',');
     }
 
     // Helpers de statut

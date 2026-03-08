@@ -208,20 +208,20 @@
                     </div>
 
                     <div style="grid-column:1/-1;">
-                        <label class="form-label">Budget (FCFA) <span style="color:#ef4444;">*</span></label>
-                        <input type="hidden" name="budget_value" id="budget_value" value="{{ old('budget_value',7000) }}">
+                        <label class="form-label">Budget ($) <span style="color:#ef4444;">*</span></label>
+                        <input type="hidden" name="budget_value" id="budget_value" value="{{ old('budget_value',10) }}">
                         <div style="display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.75rem;" id="budgetPills">
-                            @foreach([3500,7000,14000,35000,70000] as $b)
+                            @foreach([5,10,25,50,100] as $b)
                             <button type="button" onclick="selectBudget({{ $b }})" data-budget="{{ $b }}"
                                     style="padding:.5rem 1rem; border-radius:9999px; font-family:monospace; font-size:.875rem; cursor:pointer; transition:all .15s;
-                                           border:2px solid {{ old('budget_value',7000) == $b ? 'var(--color-primary)' : 'var(--color-border)' }};
-                                           background:{{ old('budget_value',7000) == $b ? 'var(--color-primary-light)' : '#fff' }};
-                                           color:{{ old('budget_value',7000) == $b ? 'var(--color-primary)' : '#374151' }};
-                                           font-weight:{{ old('budget_value',7000) == $b ? '700' : '500' }};">
-                                {{ number_format($b) }}
+                                           border:2px solid {{ old('budget_value',10) == $b ? 'var(--color-primary)' : 'var(--color-border)' }};
+                                           background:{{ old('budget_value',10) == $b ? 'var(--color-primary-light)' : '#fff' }};
+                                           color:{{ old('budget_value',10) == $b ? 'var(--color-primary)' : '#374151' }};
+                                           font-weight:{{ old('budget_value',10) == $b ? '700' : '500' }};">
+                                ${{ $b }}
                             </button>
                             @endforeach
-                            <input type="number" id="budget_custom" placeholder="Autre montant…" min="500" step="500"
+                            <input type="number" id="budget_custom" placeholder="Autre montant…" min="1" step="1"
                                    oninput="selectBudget(this.value ? parseInt(this.value) : null, true)"
                                    style="width:160px; padding:.5rem .75rem; border:2px solid var(--color-border); border-radius:.5rem; font-size:.875rem; outline:none;"
                                    onfocus="this.style.borderColor='var(--color-primary)'"
@@ -406,7 +406,7 @@
                 <div style="display:flex; gap:2rem; flex-wrap:wrap;">
                     <div>
                         <div style="font-size:.6875rem; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted);">Budget</div>
-                        <div style="font-size:1.125rem; font-weight:800; color:var(--color-primary);" id="s_budget">7 000 FCFA</div>
+                        <div style="font-size:1.125rem; font-weight:800; color:var(--color-primary);" id="s_budget">$10.00</div>
                     </div>
                     <div>
                         <div style="font-size:.6875rem; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted);">Durée</div>
@@ -439,10 +439,10 @@
 
 @push('scripts')
 <script>
-var currentBudget = {{ old('budget_value', 7000) }};
+var currentBudget = {{ old('budget_value', 10) }};
 
 function selectBudget(val, fromCustom) {
-    if (!val || val < 500) return;
+    if (!val || val < 1) return;
     currentBudget = val;
     document.getElementById('budget_value').value = val;
     document.querySelectorAll('#budgetPills button').forEach(function(btn) {
@@ -507,7 +507,7 @@ function updateSummary() {
     var obj      = objSel ? (objLabels[objSel.value] || objSel.value.replace('OUTCOME_','')) : 'Trafic';
     var st       = stSel  ? (stSel.value === 'PAUSED' ? 'En pause' : 'Active') : 'En pause';
 
-    document.getElementById('s_budget').textContent   = new Intl.NumberFormat('fr-FR').format(budget) + ' FCFA';
+    document.getElementById('s_budget').textContent   = '$' + budget.toFixed(2);
     document.getElementById('s_duration').textContent = duration + ' jour' + (duration > 1 ? 's' : '');
     document.getElementById('s_objective').textContent = obj;
     document.getElementById('s_status').textContent   = st;

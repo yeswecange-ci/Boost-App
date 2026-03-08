@@ -34,10 +34,19 @@ $tabs = [
         @endforeach
     </div>
 
-    <div style="display:flex; align-items:center; gap:1rem;">
+    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
         <span style="font-size:0.875rem; color:#94a3b8;">
             {{ $users->total() }} utilisateur(s)
         </span>
+        {{-- Forcer 2FA sur tous les comptes sans 2FA --}}
+        <form method="POST" action="{{ route('users.force2fa.all') }}"
+              onsubmit="return confirm('Forcer la configuration 2FA pour tous les comptes qui ne l\'ont pas encore activée ?')">
+            @csrf
+            <button type="submit" class="btn-warning btn-sm">
+                <i class="fas fa-shield-halved"></i>
+                Forcer 2FA (tous)
+            </button>
+        </form>
         <a href="{{ route('users.create') }}" class="btn-primary btn-sm">
             <i class="fas fa-plus"></i>
             Nouvel utilisateur
@@ -58,6 +67,7 @@ $tabs = [
                     <th>Rôle</th>
                     <th>Pages assignées</th>
                     <th>Statut</th>
+                    <th style="text-align:center;">2FA</th>
                     <th>Créé le</th>
                     <th></th>
                 </tr>
@@ -139,6 +149,21 @@ $tabs = [
                         </span>
                         @endif
                     </td>
+                    <td style="text-align:center;">
+                        @if($user->two_factor_enabled)
+                        <span title="2FA activée" style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.5rem; background:#f0fdf4; color:#16a34a; border-radius:9999px; font-size:0.75rem; font-weight:600;">
+                            <i class="fas fa-shield-halved"></i> Activée
+                        </span>
+                        @elseif($user->two_factor_required)
+                        <span title="2FA obligatoire — en attente de configuration" style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.5rem; background:#fef9c3; color:#854d0e; border-radius:9999px; font-size:0.75rem; font-weight:600;">
+                            <i class="fas fa-clock"></i> En attente
+                        </span>
+                        @else
+                        <span title="2FA non activée" style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.5rem; background:#fef2f2; color:#dc2626; border-radius:9999px; font-size:0.75rem; font-weight:600;">
+                            <i class="fas fa-shield"></i> Désactivée
+                        </span>
+                        @endif
+                    </td>
                     <td style="font-size:0.8125rem; color:#94a3b8; white-space:nowrap;">
                         {{ $user->created_at->format('d/m/Y') }}<br>
                         <span style="font-size:0.75rem;">{{ $user->created_at->format('H:i') }}</span>
@@ -157,6 +182,16 @@ $tabs = [
                                     <i class="fas {{ $user->is_active ? 'fa-ban' : 'fa-check' }}"></i>
                                 </button>
                             </form>
+
+                            @if(!$user->two_factor_enabled)
+                            <form method="POST" action="{{ route('users.force2fa', $user) }}" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="btn-secondary btn-sm"
+                                        title="Forcer la configuration 2FA">
+                                    <i class="fas fa-shield-halved"></i>
+                                </button>
+                            </form>
+                            @endif
 
                             @if(!$isSelf)
                             <div style="position:relative;">

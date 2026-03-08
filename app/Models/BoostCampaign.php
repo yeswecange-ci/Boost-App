@@ -95,7 +95,7 @@ class BoostCampaign extends Model
 
     public function getBudgetFormattedAttribute(): string
     {
-        return number_format($this->budget_value, 0, ',', ' ') . ' FCFA';
+        return '$' . number_format($this->budget_value, 2, '.', ',');
     }
 
     /**

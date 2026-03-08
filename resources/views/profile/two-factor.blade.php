@@ -6,6 +6,12 @@
 @section('content')
 <div style="max-width:600px; margin:0 auto;">
 
+    @if(session('info'))
+    <div class="alert alert-warning" style="margin-bottom:1.5rem;">
+        <i class="fas fa-shield-halved"></i> {{ session('info') }}
+    </div>
+    @endif
+
     @if(session('success_2fa'))
     <div class="alert alert-success" style="margin-bottom:1.5rem;">
         <i class="fas fa-shield-halved"></i> {{ session('success_2fa') }}

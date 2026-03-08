@@ -115,7 +115,7 @@ class CampaignController extends Controller
             'existing_campaign_id'  => 'nullable|string|max:100',
             'adset_name'            => 'required|string|max:255',
             'budget_type'           => 'required|in:lifetime_budget,daily_budget',
-            'budget_value'          => 'required|integer|min:500',
+            'budget_value'          => 'required|numeric|min:1',
             'duration_days'         => 'required|integer|min:1|max:90',
             'countries'             => 'required|array|min:1',
             'interests_value'       => 'nullable|string',

@@ -7,31 +7,19 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Middleware 2FA — s'assure que l'utilisateur a validé son code TOTP
- * si la double authentification est activée sur son compte.
+ * Middleware 2FA — deux cas gérés :
  *
- * Flux :
- *   login réussi → session créée → ce middleware intercepte toutes les
- *   requêtes → si 2FA activé et non vérifié → redirect vers /2fa/verify.
+ *  1. 2FA activé (secret en DB) + non vérifié en session
+ *     → redirect vers /2fa/verify (saisie du code TOTP)
+ *
+ *  2. 2FA requis (two_factor_required = true) mais pas encore configuré
+ *     → redirect vers /2fa/setup (configuration initiale obligatoire)
  */
 class TwoFactor
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Pas connecté → le middleware auth s'en occupe
         if (! auth()->check()) {
-            return $next($request);
-        }
-
-        $user = auth()->user();
-
-        // 2FA non activé sur ce compte → accès libre
-        if (! $user->two_factor_enabled) {
-            return $next($request);
-        }
-
-        // 2FA déjà vérifié dans cette session → accès libre
-        if ($request->session()->get('two_factor_verified')) {
             return $next($request);
         }
 
@@ -40,6 +28,22 @@ class TwoFactor
             return $next($request);
         }
 
-        return redirect()->route('2fa.verify');
+        $user = auth()->user();
+
+        // Cas 1 : 2FA configuré et activé → doit valider le code TOTP en session
+        if ($user->two_factor_enabled) {
+            if (! $request->session()->get('two_factor_verified')) {
+                return redirect()->route('2fa.verify');
+            }
+            return $next($request);
+        }
+
+        // Cas 2 : 2FA pas encore configuré mais obligatoire → forcer le setup
+        if ($user->two_factor_required) {
+            return redirect()->route('2fa.setup')
+                ->with('info', 'La double authentification est obligatoire. Veuillez la configurer pour continuer.');
+        }
+
+        return $next($request);
     }
 }

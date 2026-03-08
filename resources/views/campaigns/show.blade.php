@@ -192,7 +192,7 @@
 
                 <div style="background:#fef2f2; border-radius:.625rem; padding:.875rem; text-align:center;">
                     <div style="font-size:1.375rem; font-weight:800; color:#dc2626;">
-                        {{ number_format($totals['spend'], 0, ',', '\u{202F}') }} FCFA
+                        ${{ number_format($totals['spend'], 2, '.', ',') }}
                     </div>
                     <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">Dépensé</div>
                 </div>
@@ -206,14 +206,14 @@
 
                 <div style="background:var(--color-page-bg); border-radius:.625rem; padding:.875rem; text-align:center; border:1px solid var(--color-border);">
                     <div style="font-size:1.375rem; font-weight:800; color:var(--color-heading);">
-                        {{ number_format($totals['cpm'], 0, ',', '\u{202F}') }} FCFA
+                        ${{ number_format($totals['cpm'], 2, '.', ',') }}
                     </div>
                     <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">CPM moyen</div>
                 </div>
 
                 <div style="background:var(--color-page-bg); border-radius:.625rem; padding:.875rem; text-align:center; border:1px solid var(--color-border);">
                     <div style="font-size:1.375rem; font-weight:800; color:var(--color-heading);">
-                        {{ number_format($totals['cpc'], 0, ',', '\u{202F}') }} FCFA
+                        ${{ number_format($totals['cpc'], 2, '.', ',') }}
                     </div>
                     <div style="font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-muted); margin-top:.2rem;">CPC moyen</div>
                 </div>

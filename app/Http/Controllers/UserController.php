@@ -46,11 +46,12 @@ class UserController extends Controller
         ]);
 
         $user = User::create([
-            'name'      => $data['name'],
-            'email'     => $data['email'],
-            'password'  => Hash::make($data['password']),
-            'phone'     => $data['phone'] ?? null,
-            'is_active' => $request->boolean('is_active'),
+            'name'                => $data['name'],
+            'email'               => $data['email'],
+            'password'            => Hash::make($data['password']),
+            'phone'               => $data['phone'] ?? null,
+            'is_active'           => $request->boolean('is_active'),
+            'two_factor_required' => true, // 2FA obligatoire par défaut pour tout nouveau compte
         ]);
 
         $user->assignRole($data['role']);
@@ -134,5 +135,36 @@ class UserController extends Controller
         $msg = $user->is_active ? 'Compte activé.' : 'Compte désactivé.';
 
         return redirect()->route('users.index')->with('success', $msg);
+    }
+
+    /**
+     * Force la 2FA sur un compte spécifique (admin uniquement).
+     * Au prochain login, l'utilisateur devra configurer son authenticator.
+     */
+    public function force2fa(User $user)
+    {
+        // Si la 2FA est déjà active, rien à faire
+        if ($user->two_factor_enabled) {
+            return redirect()->route('users.index')
+                ->with('success', "{$user->name} a déjà la 2FA activée.");
+        }
+
+        $user->update(['two_factor_required' => true]);
+
+        return redirect()->route('users.index')
+            ->with('success', "2FA obligatoire activée pour {$user->name}. Il devra la configurer à sa prochaine connexion.");
+    }
+
+    /**
+     * Force la 2FA sur tous les comptes qui ne l'ont pas encore configurée (admin uniquement).
+     */
+    public function force2faAll()
+    {
+        $count = User::where('two_factor_enabled', false)
+            ->where('two_factor_required', false)
+            ->update(['two_factor_required' => true]);
+
+        return redirect()->route('users.index')
+            ->with('success', "2FA rendue obligatoire pour {$count} compte(s). Ils devront la configurer à leur prochaine connexion.");
     }
 }
