@@ -121,57 +121,6 @@
 </div>
 @endif
 
-{{-- Monitoring synchro (validateurs / admin uniquement) --}}
-@if($isValidator && $lastSyncRun)
-<div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header" style="justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-            <i class="fas fa-sync-alt" style="color:var(--color-primary);"></i>
-            Dernière synchronisation Facebook
-        </div>
-        <a href="{{ route('sync-runs.index') }}" class="btn-secondary btn-sm">
-            <i class="fas fa-list"></i> Voir tous les runs
-        </a>
-    </div>
-    <div class="card-body">
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:1rem;">
-            <div style="text-align:center;">
-                @php
-                $syncStyle = match($lastSyncRun->status) {
-                    'FINISHED' => 'color:#15803d;',
-                    'FAILED'   => 'color:#b91c1c;',
-                    default    => 'color:#854d0e;',
-                };
-                $syncIcon = match($lastSyncRun->status) {
-                    'FINISHED' => 'check-circle',
-                    'FAILED'   => 'times-circle',
-                    default    => 'spinner fa-spin',
-                };
-                @endphp
-                <div style="font-size:1.5rem; {{ $syncStyle }}"><i class="fas fa-{{ $syncIcon }}"></i></div>
-                <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">Statut</div>
-                <div style="font-weight:600; font-size:0.875rem; {{ $syncStyle }}">{{ $lastSyncRun->status }}</div>
-            </div>
-            <div style="text-align:center;">
-                <div style="font-size:1.25rem; color:#4f46e5; font-weight:700;">{{ $lastSyncRun->page_id }}</div>
-                <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">Page ID</div>
-            </div>
-            <div style="text-align:center;">
-                <div style="font-size:1.25rem; color:#4f46e5; font-weight:700;">
-                    {{ $lastSyncRun->started_at->diffForHumans() }}
-                </div>
-                <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">Démarré</div>
-            </div>
-            <div style="text-align:center;">
-                <div style="font-size:1.25rem; font-weight:700; {{ $nonBoostableCount > 0 ? 'color:#b91c1c;' : 'color:#15803d;' }}">
-                    {{ $nonBoostableCount }}
-                </div>
-                <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">Posts non boostables</div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 
 {{-- Dernières campagnes --}}
 <div class="card">

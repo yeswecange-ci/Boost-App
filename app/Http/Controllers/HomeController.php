@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\BoostCampaign;
 use App\Models\FacebookPost;
-use App\Models\SyncRun;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -42,27 +41,10 @@ class HomeController extends Controller
 
         $recentCampaigns = $campBase()->with('user')->latest()->take(5)->get();
 
-        // Monitoring sync (validateurs / admin uniquement)
-        $lastSyncRun = $isValidator
-            ? SyncRun::orderByDesc('started_at')->first()
-            : null;
-
-        $nonBoostableCount = $isValidator
-            ? FacebookPost::where(function ($q) {
-                $q->where('fb_status', '!=', 'FB_OK')
-                  ->orWhere('business_status', '!=', 'ACTIVE')
-                  ->orWhere('is_boostable', 0);
-              })
-              ->when($pageIds !== null, fn($q) => $q->whereIn('facebook_page_id', $pageIds))
-              ->count()
-            : 0;
-
         return view('home', compact(
             'isValidator', 'isN1', 'isN2',
             'campaignCounts',
-            'recentCampaigns',
-            'lastSyncRun',
-            'nonBoostableCount'
+            'recentCampaigns'
         ));
     }
 }
