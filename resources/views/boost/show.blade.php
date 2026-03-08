@@ -245,7 +245,7 @@ $backUrl = match(true) {
                     Demander modification
                 </button>
 
-                <div x-show="changesOpen" x-cloak>
+                <div x-show="changesOpen" style="display:none;">
                     <form method="POST" action="{{ route('boost.request-changes-n1', $boost->id) }}" style="display:flex; gap:0.5rem;">
                         @csrf
                         <textarea name="comment" class="form-control" rows="2"
@@ -262,7 +262,7 @@ $backUrl = match(true) {
                     Rejeter N+1
                 </button>
 
-                <div x-show="rejectOpen" x-cloak>
+                <div x-show="rejectOpen" style="display:none;">
                     <form method="POST" action="{{ route('boost.reject-n1', $boost->id) }}" style="display:flex; gap:0.5rem;">
                         @csrf
                         <textarea name="rejection_reason" class="form-control" rows="2"
@@ -304,7 +304,7 @@ $backUrl = match(true) {
                     Demander modification
                 </button>
 
-                <div x-show="changesOpen" x-cloak>
+                <div x-show="changesOpen" style="display:none;">
                     <form method="POST" action="{{ route('boost.request-changes-n2', $boost->id) }}" style="display:flex; gap:0.5rem;">
                         @csrf
                         <textarea name="comment" class="form-control" rows="2"
@@ -321,7 +321,7 @@ $backUrl = match(true) {
                     Rejeter N+2
                 </button>
 
-                <div x-show="rejectOpen" x-cloak>
+                <div x-show="rejectOpen" style="display:none;">
                     <form method="POST" action="{{ route('boost.reject-n2', $boost->id) }}" style="display:flex; gap:0.5rem;">
                         @csrf
                         <textarea name="rejection_reason" class="form-control" rows="2"
@@ -362,7 +362,7 @@ $backUrl = match(true) {
                     Annuler la campagne
                 </button>
 
-                <div x-show="cancelOpen" x-cloak>
+                <div x-show="cancelOpen" style="display:none;">
                     <form method="POST" action="{{ route('boost.cancel', $boost->id) }}" style="display:flex; gap:0.5rem;"
                           onsubmit="return confirm('Annuler définitivement le boost #{{ $boost->id }} ?')">
                         @csrf

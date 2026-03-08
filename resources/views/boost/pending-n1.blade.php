@@ -155,7 +155,7 @@
                 </div>
 
                 {{-- Reject form (Alpine collapse) --}}
-                <div x-show="rejectOpen" x-cloak style="margin-top:0.875rem;">
+                <div x-show="rejectOpen" style="display:none; margin-top:0.875rem;">
                     <form method="POST" action="{{ route('boost.reject-n1', $boost->id) }}">
                         @csrf
                         <div style="display:flex; gap:0.5rem; align-items:flex-start;">

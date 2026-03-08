@@ -274,8 +274,8 @@
                 @endif
             </button>
 
-            <div x-show="open" x-cloak
-                 style="position:absolute; right:0; top:calc(100% + 8px); width:360px; max-height:400px; overflow-y:auto; z-index:50;"
+            <div x-show="open"
+                 style="display:none; position:absolute; right:0; top:calc(100% + 8px); width:360px; max-height:400px; overflow-y:auto; z-index:50;"
                  class="dropdown-menu">
                 <div style="padding: 0.625rem 0.875rem; border-bottom: 1px solid var(--color-border); font-weight: 600; font-size: 0.875rem; color: #0f172a;">
                     Notifications
@@ -344,8 +344,8 @@
                 <i class="fas fa-chevron-down" style="font-size:0.6875rem; color:#94a3b8;"></i>
             </button>
 
-            <div x-show="open" x-cloak
-                 style="position:absolute; right:0; top:calc(100% + 8px); z-index:50;"
+            <div x-show="open"
+                 style="display:none; position:absolute; right:0; top:calc(100% + 8px); z-index:50;"
                  class="dropdown-menu">
                 <div style="padding:0.625rem 0.875rem; border-bottom:1px solid var(--color-border);">
                     <div style="font-weight:600; font-size:0.875rem; color:#0f172a;">{{ $__u->name }}</div>
@@ -374,8 +374,7 @@
     {{-- Mobile sidebar overlay backdrop --}}
     <div x-show="sidebarOpen"
          @click="sidebarOpen = false"
-         x-cloak
-         style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:35;"
+         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:35;"
          class="lg:hidden"></div>
 
     {{-- Main Content --}}

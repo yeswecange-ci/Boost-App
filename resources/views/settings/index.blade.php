@@ -212,7 +212,7 @@ $isMockMeta = ($meta['meta.mock_mode'] ?? 'true') === 'true';
         </div>
 
         {{-- Résultat du test --}}
-        <div x-show="result !== null" x-cloak style="margin-top:1rem;">
+        <div x-show="result !== null" style="display:none; margin-top:1rem;">
             <div :class="result?.success ? 'alert alert-success' : 'alert alert-danger'">
                 <div style="display:flex; align-items:flex-start; gap:0.5rem;">
                     <i :class="result?.success ? 'fas fa-check-circle' : 'fas fa-times-circle'" style="margin-top:0.1rem; flex-shrink:0;"></i>
@@ -398,7 +398,7 @@ $isMockMeta = ($meta['meta.mock_mode'] ?? 'true') === 'true';
         </div>
 
         {{-- Résultat du test --}}
-        <div x-show="result !== null" x-cloak style="margin-top:1rem;">
+        <div x-show="result !== null" style="display:none; margin-top:1rem;">
             <div :class="result?.success ? 'alert alert-success' : 'alert alert-danger'">
                 <div style="display:flex; align-items:flex-start; gap:0.5rem;">
                     <i :class="result?.success ? 'fab fa-facebook' : 'fas fa-times-circle'" style="margin-top:0.1rem; flex-shrink:0;"></i>

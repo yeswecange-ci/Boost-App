@@ -110,7 +110,7 @@
                         <i class="fas fa-history" style="font-size:0.6875rem;"></i>
                         <span x-text="historyOpen ? 'Masquer historique N+1' : 'Voir validation N+1'">Voir validation N+1</span>
                     </button>
-                    <div x-show="historyOpen" x-cloak style="margin-top:0.625rem; padding:0.75rem; background:#f8fafc; border-radius:0.5rem; border:1px solid var(--color-border);">
+                    <div x-show="historyOpen" style="display:none; margin-top:0.625rem; padding:0.75rem; background:#f8fafc; border-radius:0.5rem; border:1px solid var(--color-border);">
                         @foreach($boost->approvals as $approval)
                         <div style="font-size:0.8125rem; color:#374151;">
                             <span style="font-weight:600;">{{ $approval->user->name }}</span>
@@ -153,7 +153,7 @@
                 </div>
 
                 {{-- Reject form --}}
-                <div x-show="rejectOpen" x-cloak style="margin-top:0.875rem;">
+                <div x-show="rejectOpen" style="display:none; margin-top:0.875rem;">
                     <form method="POST" action="{{ route('boost.reject-n2', $boost->id) }}">
                         @csrf
                         <div style="display:flex; gap:0.5rem; align-items:flex-start;">
