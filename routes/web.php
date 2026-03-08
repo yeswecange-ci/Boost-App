@@ -15,17 +15,33 @@ use App\Http\Controllers\FacebookPageController;
 
 Route::get('/', fn() => redirect()->route('login'));
 
-Auth::routes();
+// Inscription publique DÉSACTIVÉE : les comptes sont créés uniquement par l'admin.
+// La route POST /register serait sinon accessible par n'importe qui.
+// throttle:login (5 tentatives / 1 min) actif via le trait AuthenticatesUsers.
+Auth::routes(['register' => false, 'verify' => false]);
 
-// ─── Webhooks N8N (sans authentification, sans CSRF) ─────────
-Route::prefix('webhook/n8n')->name('webhook.n8n.')->group(function () {
+// ─── Webhooks N8N (sans auth session, sans CSRF, authentifiés par secret header) ─
+// Rate limit : 60 requêtes/minute par IP pour bloquer les bots/scanners.
+Route::prefix('webhook/n8n')->name('webhook.n8n.')->middleware('throttle:60,1')->group(function () {
     Route::post('/boost-created',    [WebhookController::class, 'boostCreated'])->name('boost-created');
     Route::post('/boost-activated',  [WebhookController::class, 'boostActivated'])->name('boost-activated');
     Route::post('/campaign-done',    [CampaignController::class, 'n8nCallback'])->name('campaign-done');
 });
 
-// ─── Routes authentifiées ────────────────────────────────────
+// ─── 2FA — vérification OTP (auth requis, 2FA middleware NON appliqué ici) ───
+// Ces routes doivent rester accessibles AVANT la vérification 2FA.
 Route::middleware(['auth'])->group(function () {
+    Route::get('/2fa/verify',  [\App\Http\Controllers\TwoFactorController::class, 'showVerify'])->name('2fa.verify');
+    Route::post('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->name('2fa.verify.post');
+});
+
+// ─── Routes authentifiées (auth + 2fa obligatoires) ──────────
+Route::middleware(['auth', '2fa'])->group(function () {
+
+    // ─── 2FA — gestion depuis le profil ──────────────────────
+    Route::get('/2fa/setup',    [\App\Http\Controllers\TwoFactorController::class, 'showSetup'])->name('2fa.setup');
+    Route::post('/2fa/enable',  [\App\Http\Controllers\TwoFactorController::class, 'enable'])->name('2fa.enable');
+    Route::post('/2fa/disable', [\App\Http\Controllers\TwoFactorController::class, 'disable'])->name('2fa.disable');
 
     Route::post('/notifications/{id}/read',  [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('/notifications/read-all',   [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
@@ -147,4 +163,4 @@ Route::middleware(['auth'])->group(function () {
     // Route dynamique en dernier
     Route::get('/boost/{boost}', [BoostController::class, 'show'])->name('boost.show');
 
-});
+}); // fin middleware auth + 2fa

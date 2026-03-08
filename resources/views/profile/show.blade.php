@@ -279,6 +279,43 @@
         </div>
     </div>
 
+    {{-- ── Double authentification (2FA) ── --}}
+    <div class="card">
+        <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div style="
+                    width:36px; height:36px; border-radius:0.5rem; flex-shrink:0;
+                    background:{{ $user->two_factor_enabled ? '#dcfce7' : '#fef2f2' }};
+                    display:flex; align-items:center; justify-content:center;
+                ">
+                    <i class="fas fa-shield-halved"
+                       style="color:{{ $user->two_factor_enabled ? '#16a34a' : '#dc2626' }}; font-size:1rem;"></i>
+                </div>
+                <div>
+                    <h2 style="font-size:1rem; font-weight:600; margin:0;">Double authentification (2FA)</h2>
+                    <p style="font-size:0.8125rem; margin:0; color:{{ $user->two_factor_enabled ? '#16a34a' : 'var(--color-muted)' }}; font-weight:500;">
+                        @if($user->two_factor_enabled)
+                            <i class="fas fa-check-circle"></i> Activée — votre compte est protégé
+                        @else
+                            <i class="fas fa-exclamation-circle"></i> Non activée — recommandée
+                        @endif
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('2fa.setup') }}" class="{{ $user->two_factor_enabled ? 'btn-secondary' : 'btn-primary' }} btn-sm">
+                <i class="fas fa-{{ $user->two_factor_enabled ? 'gear' : 'plus' }}"></i>
+                {{ $user->two_factor_enabled ? 'Gérer la 2FA' : 'Activer la 2FA' }}
+            </a>
+        </div>
+        <div class="card-body">
+            <p style="font-size:0.875rem; color:var(--color-muted); margin:0; line-height:1.6;">
+                La double authentification ajoute une couche de sécurité supplémentaire.
+                À chaque connexion, un code temporaire généré par votre téléphone sera demandé
+                en plus de votre mot de passe.
+            </p>
+        </div>
+    </div>
+
     {{-- ── Infos compte (lecture seule) ── --}}
     <div class="card">
         <div class="card-header">

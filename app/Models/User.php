@@ -12,13 +12,15 @@ class User extends Authenticatable
     use Notifiable, HasRoles;
 
     protected $fillable = [
-        'name', 'email', 'password', 'phone', 'avatar', 'is_active'
+        'name', 'email', 'password', 'phone', 'avatar', 'is_active',
+        'two_factor_secret', 'two_factor_enabled',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_secret'];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active'           => 'boolean',
+        'two_factor_enabled'  => 'boolean',
     ];
 
     public function boostRequests()

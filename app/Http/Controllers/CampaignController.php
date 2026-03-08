@@ -379,6 +379,12 @@ class CampaignController extends Controller
 
     public function show(BoostCampaign $campaign)
     {
+        // IDOR fix : un opérateur ne peut accéder qu'à ses propres campagnes.
+        $user = auth()->user();
+        if (! $user->hasRole(['validator_n1', 'validator_n2', 'validator', 'admin'])) {
+            abort_if($campaign->user_id !== $user->id, 403, 'Accès non autorisé à cette campagne.');
+        }
+
         $campaign->load('analytics');
         return view('campaigns.show', compact('campaign'));
     }
@@ -415,29 +421,51 @@ class CampaignController extends Controller
 
     public function n8nCallback(Request $request)
     {
-        // Vérification secret (timing-safe)
+        // ── Authentification par secret partagé (timing-safe) ─────────────────
+        // SÉCURITÉ : refus explicite si le secret n'est pas configuré.
+        // L'ancienne logique `if ($secret && ...)` permettait un bypass complet
+        // lorsque le secret était vide.
         $secret   = SettingService::get('n8n.secret');
         $received = $request->header('X-N8N-Secret', '');
-        if ($secret && !hash_equals($secret, $received)) {
+
+        if (! $secret || ! $received || ! hash_equals((string) $secret, (string) $received)) {
+            Log::warning('[WEBHOOK] n8nCallback: authentification échouée', [
+                'ip'              => $request->ip(),
+                'secret_set'      => ! empty($secret),
+                'received_header' => ! empty($received),
+            ]);
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $campaign = BoostCampaign::find($request->input('campaign_db_id'));
-        if (!$campaign) {
-            return response()->json(['error' => 'Campaign not found'], 404);
-        }
+        // ── Validation stricte des inputs ─────────────────────────────────────
+        $data = $request->validate([
+            'campaign_db_id'   => 'required|integer|exists:boost_campaigns,id',
+            'execution_status' => 'required|in:done,paused_ready,active,failed,error,running',
+            'meta_campaign_id' => 'nullable|string|max:100|regex:/^[a-zA-Z0-9_-]+$/',
+            'meta_adset_id'    => 'nullable|string|max:100|regex:/^[a-zA-Z0-9_-]+$/',
+            'meta_ad_id'       => 'nullable|string|max:100|regex:/^[a-zA-Z0-9_-]+$/',
+            'error_message'    => 'nullable|string|max:1000',
+        ]);
+
+        $campaign = BoostCampaign::findOrFail($data['campaign_db_id']);
 
         // N8N envoie 'done' → campagne créée sur Meta en PAUSED, en attente d'activation
-        $status = $request->input('execution_status', 'done');
+        $status = $data['execution_status'];
         if ($status === 'done') $status = 'paused_ready';
 
         $campaign->update([
             'execution_status' => $status,
-            'meta_campaign_id' => $request->input('meta_campaign_id'),
-            'meta_adset_id'    => $request->input('meta_adset_id'),
-            'meta_ad_id'       => $request->input('meta_ad_id'),
-            'error_message'    => $request->input('error_message'),
-            'launched_at'      => $status === 'paused_ready' ? now() : null,
+            'meta_campaign_id' => $data['meta_campaign_id'] ?? $campaign->meta_campaign_id,
+            'meta_adset_id'    => $data['meta_adset_id']    ?? $campaign->meta_adset_id,
+            'meta_ad_id'       => $data['meta_ad_id']       ?? $campaign->meta_ad_id,
+            'error_message'    => $data['error_message'],
+            'launched_at'      => $status === 'paused_ready' ? now() : $campaign->launched_at,
+        ]);
+
+        Log::info('[WEBHOOK] n8nCallback traité', [
+            'campaign_id' => $campaign->id,
+            'status'      => $status,
+            'ip'          => $request->ip(),
         ]);
 
         return response()->json(['success' => true]);

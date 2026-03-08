@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\SettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 
 class SettingsController extends Controller
 {
@@ -26,13 +27,15 @@ class SettingsController extends Controller
     {
         // PHP converts dots in field names to underscores in $_POST,
         // so name="n8n.webhook_create" arrives as n8n_webhook_create.
+        // Protection SSRF : on n'autorise que https:// et http:// vers des hôtes
+        // non privés. La validation `url` de Laravel accepte file:// etc. — on filtre.
         $request->validate([
-            'n8n_webhook_create'   => 'nullable|url',
-            'n8n_webhook_activate' => 'nullable|url',
-            'n8n_webhook_pause'    => 'nullable|url',
-            'n8n_webhook_campaign' => 'nullable|url',
-            'n8n_secret'           => 'nullable|string|max:255',
-            'n8n_timeout'          => 'nullable|integer|min:3|max:60',
+            'n8n_webhook_create'   => ['nullable', 'url', 'max:500', 'regex:/^https?:\/\//i', new \App\Rules\NoPrivateIpUrl()],
+            'n8n_webhook_activate' => ['nullable', 'url', 'max:500', 'regex:/^https?:\/\//i', new \App\Rules\NoPrivateIpUrl()],
+            'n8n_webhook_pause'    => ['nullable', 'url', 'max:500', 'regex:/^https?:\/\//i', new \App\Rules\NoPrivateIpUrl()],
+            'n8n_webhook_campaign' => ['nullable', 'url', 'max:500', 'regex:/^https?:\/\//i', new \App\Rules\NoPrivateIpUrl()],
+            'n8n_secret'           => 'nullable|string|min:16|max:255',
+            'n8n_timeout'          => 'nullable|integer|min:3|max:30',
         ]);
 
         SettingService::setMany([

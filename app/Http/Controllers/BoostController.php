@@ -55,9 +55,9 @@ class BoostController extends Controller
         $validated = $request->validate([
             'post_id'        => 'required|string',
             'page_id'        => 'required|string',
-            'post_url'       => 'nullable|string',
-            'post_thumbnail' => 'nullable|string',
-            'post_message'   => 'nullable|string',
+            'post_url'       => 'nullable|url|max:2000',
+            'post_thumbnail' => 'nullable|url|max:2000',
+            'post_message'   => 'nullable|string|max:5000',
             // Tolérance d'1 jour pour absorber les décalages horaires serveur/client.
             'start_date'     => 'required|date|after_or_equal:' . now()->subDay()->format('Y-m-d'),
             'end_date'       => 'required|date|after:start_date',

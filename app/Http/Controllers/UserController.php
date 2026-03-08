@@ -112,6 +112,15 @@ class UserController extends Controller
                              ->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
 
+        // Empêche de supprimer le dernier administrateur (lockout)
+        if ($user->hasRole('admin')) {
+            $adminCount = User::role('admin')->where('is_active', true)->count();
+            if ($adminCount <= 1) {
+                return redirect()->route('users.index')
+                                 ->with('error', 'Impossible de supprimer le dernier administrateur actif.');
+            }
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')

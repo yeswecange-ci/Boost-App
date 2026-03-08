@@ -19,7 +19,12 @@
       "Bash(sed:*)",
       "Bash(xargs grep:*)",
       "Bash(where:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(composer require:*)",
+      "Bash(composer show:*)",
+      "Bash(composer dump-autoload:*)",
+      "Bash(composer audit:*)",
+      "Bash(composer:*)"
     ]
   }
 }
