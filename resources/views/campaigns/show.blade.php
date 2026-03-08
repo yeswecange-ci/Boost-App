@@ -441,7 +441,8 @@
 
         {{-- Modal rejet (partagé N1/N2) --}}
         <div x-show="rejectOpen" x-transition
-             style="position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem;">
+             style="display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:50; align-items:center; justify-content:center; padding:1rem;"
+             :style="rejectOpen ? 'display:flex' : 'display:none'">
             <div style="background:#fff; border-radius:.875rem; padding:1.5rem; max-width:480px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.2);" @click.stop>
                 <h3 style="font-size:1rem; font-weight:700; margin:0 0 .25rem;">Rejeter la campagne</h3>
                 <p style="font-size:.875rem; color:var(--color-muted); margin:0 0 1rem;">L'opérateur recevra ce motif et pourra corriger puis re-soumettre.</p>

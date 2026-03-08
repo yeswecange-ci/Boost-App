@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('page-title', 'Modifier l\'utilisateur')
-@section('page-subtitle', '{{ $user->name }}')
+@section('page-subtitle', $user->name)
 
 @section('content')
 
