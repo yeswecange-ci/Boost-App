@@ -17,7 +17,7 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('2fa.verify.post') }}" x-data autocomplete="off">
+<form id="otp-form" method="POST" action="{{ route('2fa.verify.post') }}" x-data autocomplete="off">
     @csrf
 
     {{-- OTP input avec 6 cases séparées --}}
@@ -75,40 +75,70 @@
 @push('scripts')
 <script>
 (function () {
-    const digits   = document.querySelectorAll('.otp-digit');
-    const hidden   = document.getElementById('otp-value');
-    const btn      = document.getElementById('btn-verify');
+    const digits = Array.from(document.querySelectorAll('.otp-digit'));
+    const hidden = document.getElementById('otp-value');
+    const form   = document.getElementById('otp-form');
 
-    function syncValue() {
-        const code = Array.from(digits).map(d => d.value).join('');
+    function getCode() {
+        return digits.map(d => d.value).join('');
+    }
+
+    function submit() {
+        const code = getCode();
         hidden.value = code;
-        const complete = code.length === 6 && /^\d{6}$/.test(code);
-        btn.disabled = !complete;
-        btn.style.opacity  = complete ? '1' : '0.5';
-        btn.style.cursor   = complete ? 'pointer' : 'not-allowed';
+        form.submit();
+    }
+
+    function check() {
+        const code = getCode();
+        hidden.value = code;
+        // Soumission automatique dès que les 6 chiffres sont saisis
+        if (/^\d{6}$/.test(code)) {
+            submit();
+        }
     }
 
     digits.forEach((input, idx) => {
-        // Saisie normale
+
+        // ── Bloquer les touches non numériques avant la saisie ──────
+        input.addEventListener('keydown', function (e) {
+            // Touches de navigation autorisées
+            if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+                if (e.key === 'Enter') { e.preventDefault(); submit(); return; }
+                if (e.key === 'ArrowLeft'  && idx > 0)              { e.preventDefault(); digits[idx - 1].focus(); return; }
+                if (e.key === 'ArrowRight' && idx < digits.length - 1) { e.preventDefault(); digits[idx + 1].focus(); return; }
+                if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    if (this.value) {
+                        this.value = '';
+                    } else if (idx > 0) {
+                        digits[idx - 1].value = '';
+                        digits[idx - 1].focus();
+                    }
+                    check();
+                    return;
+                }
+                return;
+            }
+            // Bloquer tout ce qui n'est pas un chiffre
+            if (!/^\d$/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        // ── Saisie : avancer automatiquement à la case suivante ─────
         input.addEventListener('input', function () {
-            // Ne garder que les chiffres
-            this.value = this.value.replace(/\D/g, '').slice(-1);
+            // Ne conserver que le dernier chiffre saisi (écrase la valeur existante)
+            const val = this.value.replace(/\D/g, '');
+            this.value = val ? val.slice(-1) : '';
+
             if (this.value && idx < digits.length - 1) {
                 digits[idx + 1].focus();
             }
-            syncValue();
+            check();
         });
 
-        // Backspace : revenir à la case précédente
-        input.addEventListener('keydown', function (e) {
-            if (e.key === 'Backspace' && !this.value && idx > 0) {
-                digits[idx - 1].focus();
-                digits[idx - 1].value = '';
-                syncValue();
-            }
-        });
-
-        // Coller un code (ex: copié depuis SMS)
+        // ── Coller un code copié (6 chiffres d'un coup) ────────────
         input.addEventListener('paste', function (e) {
             e.preventDefault();
             const pasted = (e.clipboardData || window.clipboardData)
@@ -116,13 +146,19 @@
             pasted.split('').forEach((char, i) => {
                 if (digits[i]) digits[i].value = char;
             });
-            const nextEmpty = Array.from(digits).findIndex(d => !d.value);
-            (digits[nextEmpty === -1 ? 5 : nextEmpty] || digits[5]).focus();
-            syncValue();
+            // Focus sur la dernière case remplie ou la suivante vide
+            const lastFilled = Math.min(pasted.length, digits.length) - 1;
+            digits[lastFilled]?.focus();
+            check();
+        });
+
+        // ── Clic sur une case déjà remplie : sélectionner le contenu ─
+        input.addEventListener('focus', function () {
+            this.select();
         });
     });
 
-    // Auto-focus premier champ
+    // Focus automatique sur le premier champ à l'ouverture de la page
     digits[0]?.focus();
 })();
 </script>

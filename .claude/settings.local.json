@@ -24,7 +24,8 @@
       "Bash(composer show:*)",
       "Bash(composer dump-autoload:*)",
       "Bash(composer audit:*)",
-      "Bash(composer:*)"
+      "Bash(composer:*)",
+      "Bash(tasklist:*)"
     ]
   }
 }
