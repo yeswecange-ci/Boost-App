@@ -55,6 +55,47 @@ class BoostRequest extends Model
         return $this->hasOne(BoostRun::class, 'boost_request_id');
     }
 
+    // ── Accesseurs ─────────────────────────────────────────
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match($this->status) {
+            'draft'        => 'Brouillon',
+            'pending_n1'   => 'En attente N+1',
+            'pending_n2'   => 'En attente N+2',
+            'approved'     => 'Approuvé',
+            'rejected_n1'  => 'Rejeté N+1',
+            'rejected_n2'  => 'Rejeté N+2',
+            'paused_ready' => 'Prêt à lancer',
+            'active'       => 'Actif',
+            'done'         => 'Terminé',
+            'error'        => 'Erreur',
+            default        => ucfirst($this->status),
+        };
+    }
+
+    public function getStatusClassAttribute(): string
+    {
+        return match($this->status) {
+            'draft'        => 'badge-status-draft',
+            'pending_n1'   => 'badge-status-pending',
+            'pending_n2'   => 'badge-status-pending',
+            'approved'     => 'badge-status-approved',
+            'rejected_n1'  => 'badge-status-rejected',
+            'rejected_n2'  => 'badge-status-rejected',
+            'paused_ready' => 'badge-status-paused',
+            'active'       => 'badge-status-active',
+            'done'         => 'badge-status-created',
+            'error'        => 'badge-status-rejected',
+            default        => 'badge-status-draft',
+        };
+    }
+
+    public function getBudgetFormattedAttribute(): string
+    {
+        return number_format((float) $this->budget, 0, ',', ' ') . ' FCFA';
+    }
+
     // Helpers de statut
     public function isPendingN1(): bool   { return $this->status === 'pending_n1'; }
     public function isPendingN2(): bool   { return $this->status === 'pending_n2'; }
