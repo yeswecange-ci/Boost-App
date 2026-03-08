@@ -15,8 +15,17 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- Loader inline : s'affiche AVANT que les assets Vite soient prêts --}}
+    {{--
+        Styles critiques inline — appliqués IMMÉDIATEMENT au parse du HTML,
+        avant que le CSS Vite (externe) soit téléchargé.
+
+        [x-cloak] : masque les éléments Alpine (x-show) avant son initialisation.
+        Sans cette règle inline, les dropdowns (notifs, compte) flashent "ouverts"
+        pendant le chargement de la page car x-show ne fonctionne pas avant Alpine.
+        Recommandation officielle : https://alpinejs.dev/directives/cloak
+    --}}
     <style>
+        [x-cloak] { display: none !important; }
         #page-loader{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .35s ease,visibility 0s linear 0s;will-change:opacity}
         #page-loader.loader-fade-out{opacity:0;visibility:hidden;transition:opacity .35s ease,visibility 0s linear .35s}
         .loader-ring{width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:page-spin .7s linear infinite;will-change:transform}
