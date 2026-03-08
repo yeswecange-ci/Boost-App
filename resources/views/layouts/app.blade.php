@@ -42,15 +42,7 @@
     {{-- Logo --}}
     <div style="padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--color-border);">
         <a href="{{ route('home') }}" style="display:flex; align-items:center; gap:0.75rem; text-decoration:none;">
-            <div style="
-                width: 36px; height: 36px;
-                background: linear-gradient(135deg, #4f46e5, #7c3aed);
-                border-radius: 0.625rem;
-                display: flex; align-items: center; justify-content: center;
-                color: white; font-size: 1rem; flex-shrink: 0;
-            ">
-                <i class="fas fa-rocket"></i>
-            </div>
+            <img src="/logoywc.png" alt="YWC" style="width:36px; height:36px; border-radius:0.625rem; object-fit:contain; flex-shrink:0;">
             <span style="font-size: 1.0625rem; font-weight: 700; color: #0f172a;">Boost Manager</span>
         </a>
     </div>

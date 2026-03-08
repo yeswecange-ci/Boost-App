@@ -152,8 +152,8 @@
 <div id="page-loader"><div class="loader-ring"></div></div>
 
     <div class="auth-brand">
-        <div class="auth-brand-logo">
-            <i class="fas fa-rocket"></i>
+        <div class="auth-brand-logo" style="background:none; padding:0;">
+            <img src="/logoywc.png" alt="YWC" style="width:44px; height:44px; object-fit:contain;">
         </div>
         <h1 class="auth-brand-name">{{ config('app.name', 'Meta Boost') }}</h1>
         <p class="auth-brand-sub">Gestion des campagnes Meta Ads</p>

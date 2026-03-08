@@ -227,7 +227,7 @@ $tabs = [
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" style="text-align:center; padding:3rem 1rem; color:#94a3b8;">
+                    <td colspan="10" style="text-align:center; padding:3rem 1rem; color:#94a3b8;">
                         <i class="fas fa-users" style="font-size:2rem; color:#e2e8f0; display:block; margin-bottom:0.75rem;"></i>
                         Aucun utilisateur trouvé pour ce filtre.
                     </td>
